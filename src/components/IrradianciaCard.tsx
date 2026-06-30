@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDadosIrradiancia } from '../services/api';
-
+import { getDadosIrradiancia } from '../../services/api';
 const IrradianciaCard: React.FC = () => {
   const [irradiancia, setIrradiancia] = useState<number>(0);
   const [historico, setHistorico] = useState<number[]>([]);
