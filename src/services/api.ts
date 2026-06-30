@@ -27,3 +27,12 @@ export const enviarDados = async (dados: {
   const res = await api.post('/dados', dados);
   return res.data;
 };
+export const getDadosInversor = async (clienteId: string, horas = 24) => {
+  const res = await api.get(`/inversor/${clienteId}?horas=${horas}`);
+  return res.data;
+};
+
+export const getDadosIrradiancia = async (clienteId: string, horas = 24) => {
+  const res = await api.get(`/irradiancia/${clienteId}?horas=${horas}`);
+  return res.data;
+};
