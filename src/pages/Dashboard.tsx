@@ -9,6 +9,9 @@ import MonthChart from '../components/MonthChart';
 import YearChart from '../components/YearChart';
 import PRChart from '../components/PRChart';
 import DevicesTable from '../components/DevicesTable';
+import MedidorCard from '../components/MedidorCard';
+import StringsChart from '../components/StringsChart';
+import InversorChart from '../components/InversorChart';
 
 import InversorStatus from '../components/InversorStatus';
 import IrradianciaCard from '../components/IrradianciaCard';
