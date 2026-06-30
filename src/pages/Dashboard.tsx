@@ -13,11 +13,7 @@ import DevicesTable from '../components/DevicesTable';
 import InversorStatus from '../components/InversorStatus';
 import IrradianciaCard from '../components/IrradianciaCard';
 
-// após <DevicesTable /> adicione:
-<div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
-  <InversorStatus />
-  <IrradianciaCard />
-</div>
+
 const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<'dia'|'mes'|'ano'>('dia');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -44,6 +40,10 @@ const Dashboard: React.FC = () => {
             <PRChart />
           </div>
           <DevicesTable />
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
+           <InversorStatus />
+          <IrradianciaCard />
+          </div>
         </div>
       </div>
     </div>
