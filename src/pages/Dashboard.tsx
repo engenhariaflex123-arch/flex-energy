@@ -46,6 +46,18 @@ const Dashboard: React.FC = () => {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
            <InversorStatus />
           <IrradianciaCard />
+          <div style={{ marginTop: 24 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#64748B', marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 8 }}>
+    📊 ANÁLISE DETALHADA
+          </div>
+          <div style={{ marginBottom: 12 }}>
+          <MedidorCard />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <StringsChart />
+          <InversorChart />
+          </div>
+          </div>
           </div>
         </div>
       </div>
