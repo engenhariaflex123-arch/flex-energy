@@ -58,3 +58,7 @@ export const getDadosIrradiancia = async (clienteId: string, horas = 24) => {
   const res = await api.get(`/irradiancia/${clienteId}?horas=${horas}`);
   return res.data;
 };
+export const getResumoGrupo = async (grupoId: number) => {
+  const res = await api.get(`/grupos/${grupoId}/resumo`);
+  return res.data;
+};

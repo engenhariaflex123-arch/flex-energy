@@ -25,9 +25,14 @@ const Login: React.FC = () => {
       localStorage.setItem('access_token', res.data.access_token);
       localStorage.setItem('role', res.data.role);
       localStorage.setItem('cliente_id', res.data.cliente_id ?? '');
+      localStorage.setItem('grupo_id', res.data.grupo_id ?? '');
       localStorage.setItem('nome', res.data.nome);
 
-      navigate('/dashboard');
+      if (res.data.grupo_id) {
+        navigate('/visao-geral');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setErro('Email ou senha incorretos');
     } finally {
