@@ -7,6 +7,27 @@ export const api = axios.create({
   timeout: 10000,
 });
 
+// Adiciona o token em toda requisição, se existir
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Se o token for inválido/expirado, desloga automaticamente
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getDadosCliente = async (clienteId: string, horas = 24) => {
   const res = await api.get(`/dados/${clienteId}?horas=${horas}`);
   return res.data;
@@ -27,6 +48,7 @@ export const enviarDados = async (dados: {
   const res = await api.post('/dados', dados);
   return res.data;
 };
+
 export const getDadosInversor = async (clienteId: string, horas = 24) => {
   const res = await api.get(`/inversor/${clienteId}?horas=${horas}`);
   return res.data;

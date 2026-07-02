@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDadosInversor } from '../services/api';
+import { getDadosInversor } from '../../services/api';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   geracao_normal: { label: 'Geração Normal', color: '#16A34A', icon: '✅' },
