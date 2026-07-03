@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Props { open: boolean; }
 const Sidebar: React.FC<Props> = ({ open }) => {
   const [consumoOpen, setConsumoOpen] = useState(false);
   const [geracaoOpen, setGeracaoOpen] = useState(false);
+  const navigate = useNavigate();
+  const grupoId = localStorage.getItem('grupo_id');
   if (!open) return null;
   const navItem = (icon: string, label: string, active = false, onClick?: () => void, arrow?: string) => (
     <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:10, padding:'0.6rem 1.25rem', fontSize:13, color: active ? '#F97316' : '#94A3B8', cursor:'pointer', borderLeft: active ? '3px solid #F97316' : '3px solid transparent', background: active ? 'rgba(249,115,22,0.08)' : 'transparent' }}>
@@ -22,6 +25,14 @@ const Sidebar: React.FC<Props> = ({ open }) => {
         <div style={{ fontSize:13, fontWeight:600, marginTop:2 }}>GTJ-Flex DE</div>
         <div style={{ fontSize:11, color:'#64748B', marginTop:1 }}>📍 Divinópolis, MG</div>
       </div>
+      {grupoId && (
+        <div
+          onClick={() => navigate('/visao-geral')}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.7rem 1.25rem', fontSize:12, color:'#94A3B8', cursor:'pointer', borderBottom:'1px solid rgba(255,255,255,0.07)' }}
+        >
+          <span>←</span><span>Voltar para Visão Geral</span>
+        </div>
+      )}
       <nav style={{ flex:1, paddingTop:'0.5rem' }}>
         <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:'#64748B', textTransform:'uppercase', letterSpacing:'0.08em' }}>Visão Geral</div>
         {navItem('⚡','Dashboard', true)}
