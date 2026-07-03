@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getResumoGrupo } from '../services/api';
+import { getResumoGrupo, criarMinhaUsina } from '../services/api';
 
 interface Usina {
   cliente_id: string;
@@ -38,18 +38,15 @@ const VisaoGeral: React.FC = () => {
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(true);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [novoNome, setNovoNome] = useState('');
+  const [novaCidade, setNovaCidade] = useState('');
+  const [novoEstado, setNovoEstado] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [erroForm, setErroForm] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const grupoId = localStorage.getItem('grupo_id');
-    if (!grupoId) {
-      navigate('/dashboard');
-      return;
-    }
-    carregar(Number(grupoId));
-    const interval = setInterval(() => carregar(Number(grupoId)), 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const grupoIdAtual = () => Number(localStorage.getItem('grupo_id'));
 
   const carregar = async (grupoId: number) => {
     try {
@@ -62,6 +59,35 @@ const VisaoGeral: React.FC = () => {
       setCarregando(false);
     }
   };
+
+  const handleCriarUsina = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErroForm('');
+    setSalvando(true);
+    try {
+      await criarMinhaUsina({ nome: novoNome, cidade: novaCidade, estado: novoEstado });
+      setModalAberto(false);
+      setNovoNome('');
+      setNovaCidade('');
+      setNovoEstado('');
+      await carregar(grupoIdAtual());
+    } catch (err) {
+      setErroForm('Erro ao criar usina. Tente novamente.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  useEffect(() => {
+    const grupoId = localStorage.getItem('grupo_id');
+    if (!grupoId) {
+      navigate('/dashboard');
+      return;
+    }
+    carregar(Number(grupoId));
+    const interval = setInterval(() => carregar(Number(grupoId)), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (carregando) {
     return (
@@ -84,11 +110,19 @@ const VisaoGeral: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0F1117', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 32, fontWeight: 700, color: '#F97316' }}>
-          {resumo.nome_grupo}
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 32, fontWeight: 700, color: '#F97316' }}>
+            {resumo.nome_grupo}
+          </div>
+          <div style={{ fontSize: 13, color: '#64748B' }}>Visão Geral das Usinas</div>
         </div>
-        <div style={{ fontSize: 13, color: '#64748B' }}>Visão Geral das Usinas</div>
+        <button
+          onClick={() => setModalAberto(true)}
+          style={{ background: '#F97316', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+        >
+          + Nova Usina
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '2rem' }}>
@@ -145,6 +179,68 @@ const VisaoGeral: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {modalAberto && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+          onClick={() => setModalAberto(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '2rem', width: 380 }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC', marginBottom: '1.5rem' }}>Nova Usina</div>
+            <form onSubmit={handleCriarUsina}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Nome da usina</label>
+                <input
+                  value={novoNome}
+                  onChange={(e) => setNovoNome(e.target.value)}
+                  placeholder="Ex: GTJ-Flex Nova Lima"
+                  required
+                  style={{ width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Cidade</label>
+                <input
+                  value={novaCidade}
+                  onChange={(e) => setNovaCidade(e.target.value)}
+                  placeholder="Ex: Nova Lima"
+                  style={{ width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Estado</label>
+                <input
+                  value={novoEstado}
+                  onChange={(e) => setNovoEstado(e.target.value)}
+                  placeholder="Ex: MG"
+                  maxLength={2}
+                  style={{ width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              {erroForm && <div style={{ color: '#F87171', fontSize: 12, marginBottom: '1rem' }}>{erroForm}</div>}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setModalAberto(false)}
+                  style={{ flex: 1, background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  style={{ flex: 1, background: '#F97316', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {salvando ? 'Criando...' : 'Criar Usina'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -65,3 +65,7 @@ export const getResumoGrupo = async (grupoId: number) => {
 export const getClienteAtivo = (): string => {
   return localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id') || 'cliente_001';
 };
+export const criarMinhaUsina = async (dados: { nome: string; cidade?: string; estado?: string }) => {
+  const res = await api.post('/minhas-usinas', dados);
+  return res.data;
+};
