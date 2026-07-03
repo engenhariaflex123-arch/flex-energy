@@ -62,3 +62,6 @@ export const getResumoGrupo = async (grupoId: number) => {
   const res = await api.get(`/grupos/${grupoId}/resumo`);
   return res.data;
 };
+export const getClienteAtivo = (): string => {
+  return localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id') || 'cliente_001';
+};

@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getDadosInversor } from '../services/api';
 
@@ -16,7 +17,7 @@ const InversorStatus: React.FC = () => {
 
   const buscar = async () => {
     try {
-      const res = await getDadosInversor('cliente_001', 1);
+      const res = await getDadosInversor(getClienteAtivo(), 1);
       if (res.dados && res.dados.length > 0) {
         const ultimo = res.dados[0];
         setStatus(ultimo.status || 'geracao_normal');
@@ -63,3 +64,4 @@ const InversorStatus: React.FC = () => {
 };
 
 export default InversorStatus;
+

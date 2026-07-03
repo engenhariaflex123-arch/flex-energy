@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import StatusCards from '../components/StatusCards';
@@ -20,6 +21,17 @@ import IrradianciaCard from '../components/IrradianciaCard';
 const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<'dia'|'mes'|'ano'>('dia');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const clienteParam = searchParams.get('cliente');
+    if (clienteParam) {
+      localStorage.setItem('cliente_ativo', clienteParam);
+    } else if (!localStorage.getItem('cliente_ativo')) {
+      localStorage.setItem('cliente_ativo', localStorage.getItem('cliente_id') || 'cliente_001');
+    }
+  }, [searchParams]);
+
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
       <Sidebar open={sidebarOpen} />

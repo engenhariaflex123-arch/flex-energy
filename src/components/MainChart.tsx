@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { getDadosCliente } from '../services/api';
@@ -10,7 +11,7 @@ const MainChart: React.FC = () => {
 
   const buscarDados = async () => {
     try {
-      const res = await getDadosCliente('cliente_001', 24);
+      const res = await getDadosCliente(getClienteAtivo(), 24);
       if (res.dados && res.dados.length > 0) {
         const formatado = res.dados
           .slice()

@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
@@ -7,7 +8,7 @@ const InversorChart: React.FC = () => {
 
   const buscar = async () => {
     try {
-      const res = await api.get('/inversor/cliente_001?horas=24');
+      const res = await api.get(`/inversor/${getClienteAtivo()}?horas=24`);
       if (res.data.dados && res.data.dados.length > 0) {
         const formatado = res.data.dados.slice().reverse().map((d: any) => ({
           hora: new Date(d._time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),

@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
@@ -6,7 +7,7 @@ const MedidorCard: React.FC = () => {
 
   const buscar = async () => {
     try {
-      const res = await api.get('/medidor/cliente_001?horas=1');
+      const res = await api.get(`/medidor/${getClienteAtivo()}?horas=1`);
       if (res.data.dados && res.data.dados.length > 0) {
         setDados(res.data.dados[0]);
       }

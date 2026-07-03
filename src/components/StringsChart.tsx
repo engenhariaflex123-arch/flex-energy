@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
@@ -7,7 +8,7 @@ const StringsChart: React.FC = () => {
 
   const buscar = async () => {
     try {
-      const res = await api.get('/inversor/cliente_001?horas=1');
+      const res = await api.get(`/inversor/${getClienteAtivo()}?horas=1`);
       if (res.data.dados && res.data.dados.length > 0) {
         const ultimo = res.data.dados[0];
         const strings: any[] = [];

@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getDadosIrradiancia } from '../services/api';
 const IrradianciaCard: React.FC = () => {
@@ -7,7 +8,7 @@ const IrradianciaCard: React.FC = () => {
 
   const buscar = async () => {
     try {
-      const res = await getDadosIrradiancia('cliente_001', 6);
+      const res = await getDadosIrradiancia(getClienteAtivo(), 6);
       if (res.dados && res.dados.length > 0) {
         setIrradiancia(Number(res.dados[0].irradiancia_wm2 || 0));
         setHistorico(res.dados.slice(0, 10).reverse().map((d: any) => Number(d.irradiancia_wm2 || 0)));
@@ -49,3 +50,4 @@ const IrradianciaCard: React.FC = () => {
 };
 
 export default IrradianciaCard;
+

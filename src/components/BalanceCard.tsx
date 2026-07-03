@@ -1,3 +1,4 @@
+import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getBalanco } from '../services/api';
 
@@ -7,7 +8,7 @@ const BalanceCard: React.FC = () => {
   useEffect(() => {
     const buscar = async () => {
       try {
-        const res = await getBalanco('cliente_001', 24);
+        const res = await getBalanco(getClienteAtivo(), 24);
         setBalanco(res);
       } catch (err) {
         console.log('Usando dados simulados');
