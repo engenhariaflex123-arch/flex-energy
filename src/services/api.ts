@@ -65,7 +65,30 @@ export const getResumoGrupo = async (grupoId: number) => {
 export const getClienteAtivo = (): string => {
   return localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id') || 'cliente_001';
 };
-export const criarMinhaUsina = async (dados: { nome: string; cidade?: string; estado?: string }) => {
+interface StringInversorPayload {
+  kwp: number;
+}
+
+interface InversorPayload {
+  marca: string;
+  modelo: string;
+  potencia_kw: number;
+  mppts: number;
+  strings: StringInversorPayload[];
+}
+
+interface CriarUsinaPayload {
+  nome: string;
+  cidade?: string;
+  estado?: string;
+  endereco?: string;
+  tipo_instalacao?: string;
+  potencia_kwp?: number;
+  foto_base64?: string;
+  inversores: InversorPayload[];
+}
+
+export const criarMinhaUsina = async (dados: CriarUsinaPayload) => {
   const res = await api.post('/minhas-usinas', dados);
   return res.data;
 };

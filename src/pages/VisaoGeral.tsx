@@ -22,6 +22,18 @@ interface Resumo {
   usinas: Usina[];
 }
 
+interface StringForm {
+  kwp: string;
+}
+
+interface InversorForm {
+  marca: string;
+  modelo: string;
+  potencia_kw: string;
+  mppts: string;
+  strings: StringForm[];
+}
+
 const statusCor: Record<string, string> = {
   produzindo: '#22C55E',
   online: '#3B82F6',
@@ -34,17 +46,35 @@ const statusLabel: Record<string, string> = {
   offline: 'Offline',
 };
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+};
+
+const labelStyle: React.CSSProperties = { fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 };
+
+const novoInversorVazio = (): InversorForm => ({
+  marca: '', modelo: '', potencia_kw: '', mppts: '2', strings: [{ kwp: '' }],
+});
+
 const VisaoGeral: React.FC = () => {
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(true);
+  const navigate = useNavigate();
+
   const [modalAberto, setModalAberto] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [novaCidade, setNovaCidade] = useState('');
   const [novoEstado, setNovoEstado] = useState('');
+  const [novoEndereco, setNovoEndereco] = useState('');
+  const [novoTipoInstalacao, setNovoTipoInstalacao] = useState('solo');
+  const [novaPotenciaKwp, setNovaPotenciaKwp] = useState('');
+  const [fotoBase64, setFotoBase64] = useState('');
+  const [fotoNomeArquivo, setFotoNomeArquivo] = useState('');
+  const [inversores, setInversores] = useState<InversorForm[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState('');
-  const navigate = useNavigate();
 
   const grupoIdAtual = () => Number(localStorage.getItem('grupo_id'));
 
@@ -60,24 +90,6 @@ const VisaoGeral: React.FC = () => {
     }
   };
 
-  const handleCriarUsina = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErroForm('');
-    setSalvando(true);
-    try {
-      await criarMinhaUsina({ nome: novoNome, cidade: novaCidade, estado: novoEstado });
-      setModalAberto(false);
-      setNovoNome('');
-      setNovaCidade('');
-      setNovoEstado('');
-      await carregar(grupoIdAtual());
-    } catch (err) {
-      setErroForm('Erro ao criar usina. Tente novamente.');
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   useEffect(() => {
     const grupoId = localStorage.getItem('grupo_id');
     if (!grupoId) {
@@ -88,6 +100,84 @@ const VisaoGeral: React.FC = () => {
     const interval = setInterval(() => carregar(Number(grupoId)), 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const resetForm = () => {
+    setNovoNome('');
+    setNovaCidade('');
+    setNovoEstado('');
+    setNovoEndereco('');
+    setNovoTipoInstalacao('solo');
+    setNovaPotenciaKwp('');
+    setFotoBase64('');
+    setFotoNomeArquivo('');
+    setInversores([]);
+    setErroForm('');
+  };
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFotoNomeArquivo(file.name);
+    const reader = new FileReader();
+    reader.onload = () => setFotoBase64(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const addInversor = () => setInversores([...inversores, novoInversorVazio()]);
+  const removeInversor = (idx: number) => setInversores(inversores.filter((_, i) => i !== idx));
+  const updateInversor = (idx: number, campo: keyof InversorForm, valor: string) => {
+    const copia = [...inversores];
+    (copia[idx] as any)[campo] = valor;
+    setInversores(copia);
+  };
+  const addString = (invIdx: number) => {
+    const copia = [...inversores];
+    copia[invIdx].strings.push({ kwp: '' });
+    setInversores(copia);
+  };
+  const removeString = (invIdx: number, strIdx: number) => {
+    const copia = [...inversores];
+    copia[invIdx].strings = copia[invIdx].strings.filter((_, i) => i !== strIdx);
+    setInversores(copia);
+  };
+  const updateString = (invIdx: number, strIdx: number, valor: string) => {
+    const copia = [...inversores];
+    copia[invIdx].strings[strIdx].kwp = valor;
+    setInversores(copia);
+  };
+
+  const handleCriarUsina = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErroForm('');
+    setSalvando(true);
+    try {
+      await criarMinhaUsina({
+        nome: novoNome,
+        cidade: novaCidade,
+        estado: novoEstado,
+        endereco: novoEndereco,
+        tipo_instalacao: novoTipoInstalacao,
+        potencia_kwp: novaPotenciaKwp ? Number(novaPotenciaKwp) : undefined,
+        foto_base64: fotoBase64 || undefined,
+        inversores: inversores.map((inv) => ({
+          marca: inv.marca,
+          modelo: inv.modelo,
+          potencia_kw: Number(inv.potencia_kw) || 0,
+          mppts: Number(inv.mppts) || 1,
+          strings: inv.strings
+            .filter((s) => s.kwp !== '')
+            .map((s) => ({ kwp: Number(s.kwp) })),
+        })),
+      });
+      setModalAberto(false);
+      resetForm();
+      await carregar(grupoIdAtual());
+    } catch (err) {
+      setErroForm('Erro ao criar usina. Tente novamente.');
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   if (carregando) {
     return (
@@ -106,7 +196,7 @@ const VisaoGeral: React.FC = () => {
   }
 
   const saldo = resumo.total_geracao_kw - resumo.total_consumo_kw;
-  const usinasOnline = resumo.usinas.filter(u => u.status !== 'offline').length;
+  const usinasOnline = resumo.usinas.filter((u) => u.status !== 'offline').length;
 
   return (
     <div style={{ minHeight: '100vh', background: '#0F1117', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
@@ -182,49 +272,121 @@ const VisaoGeral: React.FC = () => {
 
       {modalAberto && (
         <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, overflowY: 'auto', padding: '2rem 1rem' }}
           onClick={() => setModalAberto(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '2rem', width: 380 }}
+            style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '2rem', width: 480, maxWidth: '100%' }}
           >
             <div style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC', marginBottom: '1.5rem' }}>Nova Usina</div>
             <form onSubmit={handleCriarUsina}>
+
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Nome da usina</label>
-                <input
-                  value={novoNome}
-                  onChange={(e) => setNovoNome(e.target.value)}
-                  placeholder="Ex: GTJ-Flex Nova Lima"
-                  required
-                  style={{ width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-                />
+                <label style={labelStyle}>Nome da usina</label>
+                <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Ex: GTJ-Flex Nova Lima" required style={inputStyle} />
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Cidade</label>
+                  <input value={novaCidade} onChange={(e) => setNovaCidade(e.target.value)} placeholder="Ex: Nova Lima" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Estado</label>
+                  <input value={novoEstado} onChange={(e) => setNovoEstado(e.target.value)} placeholder="MG" maxLength={2} style={inputStyle} />
+                </div>
+              </div>
+
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Cidade</label>
-                <input
-                  value={novaCidade}
-                  onChange={(e) => setNovaCidade(e.target.value)}
-                  placeholder="Ex: Nova Lima"
-                  style={{ width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-                />
+                <label style={labelStyle}>Endereço</label>
+                <input value={novoEndereco} onChange={(e) => setNovoEndereco(e.target.value)} placeholder="Rua, número, bairro" style={inputStyle} />
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Tipo de instalação</label>
+                  <select value={novoTipoInstalacao} onChange={(e) => setNovoTipoInstalacao(e.target.value)} style={inputStyle}>
+                    <option value="solo">Solo</option>
+                    <option value="telhado">Telhado</option>
+                    <option value="carport">Carport</option>
+                    <option value="fachada">Fachada</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Potência (kWp)</label>
+                  <input value={novaPotenciaKwp} onChange={(e) => setNovaPotenciaKwp(e.target.value)} placeholder="Ex: 75.5" type="number" step="0.01" style={inputStyle} />
+                </div>
+              </div>
+
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Estado</label>
-                <input
-                  value={novoEstado}
-                  onChange={(e) => setNovoEstado(e.target.value)}
-                  placeholder="Ex: MG"
-                  maxLength={2}
-                  style={{ width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-                />
+                <label style={labelStyle}>Foto da usina</label>
+                <input type="file" accept="image/*" onChange={handleFotoChange} style={{ ...inputStyle, padding: '8px 14px' }} />
+                {fotoNomeArquivo && <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Selecionado: {fotoNomeArquivo}</div>}
               </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>Inversores</div>
+                  <button type="button" onClick={addInversor} style={{ background: 'transparent', color: '#F97316', border: '1px solid #F97316', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
+                    + Adicionar inversor
+                  </button>
+                </div>
+
+                {inversores.length === 0 && (
+                  <div style={{ fontSize: 12, color: '#64748B', marginBottom: 8 }}>Nenhum inversor adicionado ainda.</div>
+                )}
+
+                {inversores.map((inv, invIdx) => (
+                  <div key={invIdx} style={{ background: '#1E2436', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '1rem', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8' }}>Inversor {invIdx + 1}</div>
+                      <button type="button" onClick={() => removeInversor(invIdx)} style={{ background: 'transparent', color: '#F87171', border: 'none', fontSize: 12, cursor: 'pointer' }}>
+                        Remover
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                      <input value={inv.marca} onChange={(e) => updateInversor(invIdx, 'marca', e.target.value)} placeholder="Marca" style={inputStyle} />
+                      <input value={inv.modelo} onChange={(e) => updateInversor(invIdx, 'modelo', e.target.value)} placeholder="Modelo" style={inputStyle} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                      <input value={inv.potencia_kw} onChange={(e) => updateInversor(invIdx, 'potencia_kw', e.target.value)} placeholder="Potência (kW)" type="number" step="0.01" style={inputStyle} />
+                      <input value={inv.mppts} onChange={(e) => updateInversor(invIdx, 'mppts', e.target.value)} placeholder="Nº de MPPTs" type="number" style={inputStyle} />
+                    </div>
+
+                    <div style={{ paddingLeft: 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>Strings</div>
+                        <button type="button" onClick={() => addString(invIdx)} style={{ background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }}>
+                          + String
+                        </button>
+                      </div>
+                      {inv.strings.map((s, strIdx) => (
+                        <div key={strIdx} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                          <input
+                            value={s.kwp}
+                            onChange={(e) => updateString(invIdx, strIdx, e.target.value)}
+                            placeholder={`kWp da string ${strIdx + 1}`}
+                            type="number" step="0.01"
+                            style={{ ...inputStyle, flex: 1 }}
+                          />
+                          <button type="button" onClick={() => removeString(invIdx, strIdx)} style={{ background: 'transparent', color: '#F87171', border: 'none', fontSize: 12, cursor: 'pointer' }}>
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {erroForm && <div style={{ color: '#F87171', fontSize: 12, marginBottom: '1rem' }}>{erroForm}</div>}
+
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   type="button"
-                  onClick={() => setModalAberto(false)}
+                  onClick={() => { setModalAberto(false); resetForm(); }}
                   style={{ flex: 1, background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
                 >
                   Cancelar
