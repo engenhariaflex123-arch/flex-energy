@@ -92,3 +92,7 @@ export const criarMinhaUsina = async (dados: CriarUsinaPayload) => {
   const res = await api.post('/minhas-usinas', dados);
   return res.data;
 };
+export const getMinhasUsinas = async () => {
+  const res = await api.get('/minhas-usinas');
+  return res.data;
+};
