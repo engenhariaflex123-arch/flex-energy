@@ -31,7 +31,7 @@ const Dashboard: React.FC = () => {
       localStorage.setItem('cliente_ativo', localStorage.getItem('cliente_id') || 'cliente_001');
     }
   }, [searchParams]);
-  const clienteAtivo = searchParams.get('cliente') || 'default';
+  const clienteAtivo = searchParams.get('cliente') || localStorage.getItem('cliente_id') || 'default';
 
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
