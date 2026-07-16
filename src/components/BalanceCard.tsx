@@ -1,14 +1,17 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getBalanco } from '../services/api';
 
-const BalanceCard: React.FC = () => {
+interface BalanceCardProps {
+  clienteAtivo: string;
+}
+
+const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
   const [balanco, setBalanco] = useState<any>(null);
 
   useEffect(() => {
     const buscar = async () => {
       try {
-        const res = await getBalanco(getClienteAtivo(), 24);
+        const res = await getBalanco(clienteAtivo, 24);
         setBalanco(res);
       } catch (err) {
         console.log('Usando dados simulados');
@@ -17,7 +20,7 @@ const BalanceCard: React.FC = () => {
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   const geracao = balanco?.media_geracao_kw ?? 4.82;
   const consumo = balanco?.media_consumo_kw ?? 3.41;

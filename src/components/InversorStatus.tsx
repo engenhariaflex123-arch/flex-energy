@@ -1,4 +1,3 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getDadosInversor } from '../services/api';
 
@@ -9,33 +8,38 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string
   offline:        { label: 'Offline',        color: '#64748B', icon: '⭕' },
 };
 
-const InversorStatus: React.FC = () => {
+interface InversorStatusProps {
+  clienteAtivo: string;
+}
+
+const InversorStatus: React.FC<InversorStatusProps> = ({ clienteAtivo }) => {
   const [status, setStatus] = useState<string>('geracao_normal');
   const [temperatura, setTemperatura] = useState<number>(0);
   const [potencia, setPotencia] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
-  const buscar = async () => {
-    try {
-      const res = await getDadosInversor(getClienteAtivo(), 1);
-      if (res.dados && res.dados.length > 0) {
-        const ultimo = res.dados[0];
-        setStatus(ultimo.status || 'geracao_normal');
-        setTemperatura(Number(ultimo.temperatura || 0));
-        setPotencia(Number(ultimo.potencia_ativa_kw || 0));
-      }
-    } catch (err) {
-      console.log('Erro ao buscar status do inversor');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await getDadosInversor(clienteAtivo, 1);
+        if (res.dados && res.dados.length > 0) {
+          const ultimo = res.dados[0];
+          setStatus(ultimo.status || 'geracao_normal');
+          setTemperatura(Number(ultimo.temperatura || 0));
+          setPotencia(Number(ultimo.potencia_ativa_kw || 0));
+        }
+      } catch (err) {
+        console.log('Erro ao buscar status do inversor');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setLoading(true);
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG['geracao_normal'];
 
@@ -64,4 +68,3 @@ const InversorStatus: React.FC = () => {
 };
 
 export default InversorStatus;
-

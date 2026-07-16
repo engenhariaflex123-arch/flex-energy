@@ -1,44 +1,48 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { getDadosCliente } from '../services/api';
 
 const tt = { contentStyle: { background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 } };
 
-const MainChart: React.FC = () => {
+interface MainChartProps {
+  clienteAtivo: string;
+}
+
+const MainChart: React.FC<MainChartProps> = ({ clienteAtivo }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const buscarDados = async () => {
-    try {
-      const res = await getDadosCliente(getClienteAtivo(), 24);
-      if (res.dados && res.dados.length > 0) {
-        const formatado = res.dados
-          .slice()
-          .reverse()
-          .map((d: any, index: number) => ({
-            hora: new Date(d.timestamp).toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }),
-            Geração: Number(d.geracao_kw),
-            Consumo: Number(d.consumo_kw),
-          }));
-        setData(formatado);
-      }
-    } catch (err) {
-      console.log('Erro ao buscar dados:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const buscarDados = async () => {
+      try {
+        const res = await getDadosCliente(clienteAtivo, 24);
+        if (res.dados && res.dados.length > 0) {
+          const formatado = res.dados
+            .slice()
+            .reverse()
+            .map((d: any, index: number) => ({
+              hora: new Date(d.timestamp).toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              }),
+              Geração: Number(d.geracao_kw),
+              Consumo: Number(d.consumo_kw),
+            }));
+          setData(formatado);
+        }
+      } catch (err) {
+        console.log('Erro ao buscar dados:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setLoading(true);
     buscarDados();
     const interval = setInterval(buscarDados, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   return (
     <div style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '1.25rem' }}>

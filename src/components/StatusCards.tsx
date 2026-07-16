@@ -1,14 +1,17 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getBalanco } from '../services/api';
 
-const StatusCards: React.FC = () => {
+interface StatusCardsProps {
+  clienteAtivo: string;
+}
+
+const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
   const [dados, setDados] = useState<any>(null);
 
   useEffect(() => {
     const buscar = async () => {
       try {
-        const res = await getBalanco(getClienteAtivo(), 24);
+        const res = await getBalanco(clienteAtivo, 24);
         setDados(res);
       } catch (err) {
         console.log('Usando dados simulados');
@@ -17,7 +20,7 @@ const StatusCards: React.FC = () => {
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   const geracao = dados?.media_geracao_kw ?? 28.2;
   const consumo = dados?.media_consumo_kw ?? 6.6;

@@ -1,30 +1,35 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { getDadosIrradiancia } from '../services/api';
-const IrradianciaCard: React.FC = () => {
+
+interface IrradianciaCardProps {
+  clienteAtivo: string;
+}
+
+const IrradianciaCard: React.FC<IrradianciaCardProps> = ({ clienteAtivo }) => {
   const [irradiancia, setIrradiancia] = useState<number>(0);
   const [historico, setHistorico] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const buscar = async () => {
-    try {
-      const res = await getDadosIrradiancia(getClienteAtivo(), 6);
-      if (res.dados && res.dados.length > 0) {
-        setIrradiancia(Number(res.dados[0].irradiancia_wm2 || 0));
-        setHistorico(res.dados.slice(0, 10).reverse().map((d: any) => Number(d.irradiancia_wm2 || 0)));
-      }
-    } catch (err) {
-      console.log('Erro ao buscar irradiância');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await getDadosIrradiancia(clienteAtivo, 6);
+        if (res.dados && res.dados.length > 0) {
+          setIrradiancia(Number(res.dados[0].irradiancia_wm2 || 0));
+          setHistorico(res.dados.slice(0, 10).reverse().map((d: any) => Number(d.irradiancia_wm2 || 0)));
+        }
+      } catch (err) {
+        console.log('Erro ao buscar irradiância');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setLoading(true);
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   const nivel = irradiancia > 600 ? 'Alta' : irradiancia > 300 ? 'Média' : 'Baixa';
   const cor = irradiancia > 600 ? '#EAB308' : irradiancia > 300 ? '#F97316' : '#64748B';
@@ -50,4 +55,3 @@ const IrradianciaCard: React.FC = () => {
 };
 
 export default IrradianciaCard;
-

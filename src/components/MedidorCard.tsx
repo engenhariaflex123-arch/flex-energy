@@ -1,26 +1,29 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
-const MedidorCard: React.FC = () => {
+interface MedidorCardProps {
+  clienteAtivo: string;
+}
+
+const MedidorCard: React.FC<MedidorCardProps> = ({ clienteAtivo }) => {
   const [dados, setDados] = useState<any>(null);
 
-  const buscar = async () => {
-    try {
-      const res = await api.get(`/medidor/${getClienteAtivo()}?horas=1`);
-      if (res.data.dados && res.data.dados.length > 0) {
-        setDados(res.data.dados[0]);
-      }
-    } catch (err) {
-      console.log('Erro ao buscar medidor');
-    }
-  };
-
   useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await api.get(`/medidor/${clienteAtivo}?horas=1`);
+        if (res.data.dados && res.data.dados.length > 0) {
+          setDados(res.data.dados[0]);
+        }
+      } catch (err) {
+        console.log('Erro ao buscar medidor');
+      }
+    };
+
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   const campo = (label: string, valor: any, unidade: string, cor = '#94A3B8') => (
     <div style={{ background: '#1E2436', borderRadius: 8, padding: '0.6rem 0.8rem' }}>

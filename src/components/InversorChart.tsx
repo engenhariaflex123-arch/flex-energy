@@ -1,32 +1,36 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
 
-const InversorChart: React.FC = () => {
+interface InversorChartProps {
+  clienteAtivo: string;
+}
+
+const InversorChart: React.FC<InversorChartProps> = ({ clienteAtivo }) => {
   const [data, setData] = useState<any[]>([]);
 
-  const buscar = async () => {
-    try {
-      const res = await api.get(`/inversor/${getClienteAtivo()}?horas=24`);
-      if (res.data.dados && res.data.dados.length > 0) {
-        const formatado = res.data.dados.slice().reverse().map((d: any) => ({
-          hora: new Date(d._time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          'Temperatura (°C)': Number(d.temperatura || 0).toFixed(1),
-          'Pot. Injetada (kW)': Number(d.potencia_injetada_kw || 0).toFixed(2),
-        }));
-        setData(formatado);
-      }
-    } catch (err) {
-      console.log('Erro ao buscar histórico do inversor');
-    }
-  };
-
   useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await api.get(`/inversor/${clienteAtivo}?horas=24`);
+        if (res.data.dados && res.data.dados.length > 0) {
+          const formatado = res.data.dados.slice().reverse().map((d: any) => ({
+            hora: new Date(d._time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            'Temperatura (°C)': Number(d.temperatura || 0).toFixed(1),
+            'Pot. Injetada (kW)': Number(d.potencia_injetada_kw || 0).toFixed(2),
+          }));
+          setData(formatado);
+        }
+      } catch (err) {
+        console.log('Erro ao buscar histórico do inversor');
+      }
+    };
+
+    setData([]);
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   return (
     <div style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '1.25rem' }}>

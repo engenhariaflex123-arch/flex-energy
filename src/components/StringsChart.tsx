@@ -1,38 +1,42 @@
-import { getClienteAtivo } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
 
-const StringsChart: React.FC = () => {
+interface StringsChartProps {
+  clienteAtivo: string;
+}
+
+const StringsChart: React.FC<StringsChartProps> = ({ clienteAtivo }) => {
   const [data, setData] = useState<any[]>([]);
 
-  const buscar = async () => {
-    try {
-      const res = await api.get(`/inversor/${getClienteAtivo()}?horas=1`);
-      if (res.data.dados && res.data.dados.length > 0) {
-        const ultimo = res.data.dados[0];
-        const strings: any[] = [];
-        let i = 1;
-        while (ultimo[`tensao_string_${i}`] !== undefined || ultimo[`corrente_string_${i}`] !== undefined) {
-          strings.push({
-            name: `S${i}`,
-            'Tensão (V)': Number(ultimo[`tensao_string_${i}`] || 0).toFixed(1),
-            'Corrente (A)': Number(ultimo[`corrente_string_${i}`] || 0).toFixed(2),
-          });
-          i++;
-        }
-        setData(strings);
-      }
-    } catch (err) {
-      console.log('Erro ao buscar strings');
-    }
-  };
-
   useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await api.get(`/inversor/${clienteAtivo}?horas=1`);
+        if (res.data.dados && res.data.dados.length > 0) {
+          const ultimo = res.data.dados[0];
+          const strings: any[] = [];
+          let i = 1;
+          while (ultimo[`tensao_string_${i}`] !== undefined || ultimo[`corrente_string_${i}`] !== undefined) {
+            strings.push({
+              name: `S${i}`,
+              'Tensão (V)': Number(ultimo[`tensao_string_${i}`] || 0).toFixed(1),
+              'Corrente (A)': Number(ultimo[`corrente_string_${i}`] || 0).toFixed(2),
+            });
+            i++;
+          }
+          setData(strings);
+        }
+      } catch (err) {
+        console.log('Erro ao buscar strings');
+      }
+    };
+
+    setData([]);
     buscar();
     const interval = setInterval(buscar, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clienteAtivo]);
 
   return (
     <div style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '1.25rem' }}>
