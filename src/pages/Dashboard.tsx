@@ -31,13 +31,14 @@ const Dashboard: React.FC = () => {
       localStorage.setItem('cliente_ativo', localStorage.getItem('cliente_id') || 'cliente_001');
     }
   }, [searchParams]);
+  const clienteAtivo = searchParams.get('cliente') || 'default';
 
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
       <Sidebar open={sidebarOpen} />
       <div style={{ flex:1, marginLeft: sidebarOpen ? 220 : 0, transition:'margin 0.3s', minWidth:0 }}>
         <Topbar period={period} setPeriod={setPeriod} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div style={{ padding:'1.25rem 1.5rem' }}>
+        <div key={clienteAtivo} style={{ padding:'1.25rem 1.5rem' }}>
           <div style={{ background:'rgba(234,179,8,0.1)', border:'1px solid rgba(234,179,8,0.3)', borderRadius:8, padding:'0.6rem 1rem', marginBottom:'1.25rem', display:'flex', alignItems:'center', gap:10, fontSize:12, color:'#EAB308' }}>
             ⚠️ <strong>Inversor 2</strong> — Alarme ativo: sobretensão CA detectada às 14h22
           </div>
