@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getMinhasUsinas } from '../services/api';
 
-interface Props { open: boolean; }
-const Sidebar: React.FC<Props> = ({ open }) => {
+interface Props { open: boolean; clienteAtivo?: string; }
+const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   const [consumoOpen, setConsumoOpen] = useState(false);
   const [geracaoOpen, setGeracaoOpen] = useState(false);
+  const [usinaAtual, setUsinaAtual] = useState<{ nome: string; cidade?: string; estado?: string } | null>(null);
   const navigate = useNavigate();
   const grupoId = localStorage.getItem('grupo_id');
+
+  useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await getMinhasUsinas();
+        const cid = clienteAtivo || localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id');
+        const encontrada = res.usinas?.find((u: any) => u.cliente_id === cid);
+        if (encontrada) setUsinaAtual(encontrada);
+      } catch (err) {
+        console.log('Não foi possível carregar nome da usina ativa');
+      }
+    };
+    buscar();
+  }, [clienteAtivo]);
+
   if (!open) return null;
   const navItem = (icon: string, label: string, active = false, onClick?: () => void, arrow?: string) => (
     <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:10, padding:'0.6rem 1.25rem', fontSize:13, color: active ? '#F97316' : '#94A3B8', cursor:'pointer', borderLeft: active ? '3px solid #F97316' : '3px solid transparent', background: active ? 'rgba(249,115,22,0.08)' : 'transparent' }}>
@@ -22,8 +39,8 @@ const Sidebar: React.FC<Props> = ({ open }) => {
       </div>
       <div style={{ padding:'0.875rem 1.25rem', borderBottom:'1px solid rgba(255,255,255,0.07)', background:'rgba(249,115,22,0.08)' }}>
         <div style={{ fontSize:10, color:'#F97316', textTransform:'uppercase', letterSpacing:'0.08em' }}>Cliente</div>
-        <div style={{ fontSize:13, fontWeight:600, marginTop:2 }}>GTJ-Flex DE</div>
-        <div style={{ fontSize:11, color:'#64748B', marginTop:1 }}>📍 Divinópolis, MG</div>
+        <div style={{ fontSize:13, fontWeight:600, marginTop:2 }}>{usinaAtual?.nome || 'Carregando...'}</div>
+        <div style={{ fontSize:11, color:'#64748B', marginTop:1 }}>📍 {usinaAtual?.cidade || ''}{usinaAtual?.estado ? `, ${usinaAtual.estado}` : ''}</div>
       </div>
       {grupoId && (
         <div
@@ -54,9 +71,11 @@ const Sidebar: React.FC<Props> = ({ open }) => {
         {navItem('📄','Exportar PDF')}
       </nav>
       <div style={{ padding:'1rem 1.25rem', borderTop:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:10 }}>
-        <div style={{ width:32, height:32, borderRadius:'50%', background:'#F97316', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff' }}>G</div>
+        <div style={{ width:32, height:32, borderRadius:'50%', background:'#F97316', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff' }}>
+          {usinaAtual?.nome?.charAt(0) || 'G'}
+        </div>
         <div>
-          <div style={{ fontSize:12, fontWeight:500 }}>GTJ-Flex DE</div>
+          <div style={{ fontSize:12, fontWeight:500 }}>{usinaAtual?.nome || 'Carregando...'}</div>
           <div style={{ fontSize:10, color:'#64748B' }}>Visualizador</div>
         </div>
       </div>
