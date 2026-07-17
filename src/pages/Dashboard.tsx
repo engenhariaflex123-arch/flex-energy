@@ -6,6 +6,7 @@ import StatusCards from '../components/StatusCards';
 import MainChart from '../components/MainChart';
 import BalanceCard from '../components/BalanceCard';
 import ClimateCard from '../components/ClimateCard';
+import PieChart from '../components/PieChart';
 import PRChart from '../components/PRChart';
 import DevicesTable from '../components/DevicesTable';
 import MedidorCard from '../components/MedidorCard';
@@ -45,6 +46,7 @@ const Dashboard: React.FC = () => {
             <MainChart clienteAtivo={clienteAtivo} period={period} />
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <BalanceCard clienteAtivo={clienteAtivo} />
+              <PieChart clienteAtivo={clienteAtivo} period={period} />
               <ClimateCard />
             </div>
           </div>
