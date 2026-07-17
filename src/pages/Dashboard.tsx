@@ -6,8 +6,6 @@ import StatusCards from '../components/StatusCards';
 import MainChart from '../components/MainChart';
 import BalanceCard from '../components/BalanceCard';
 import ClimateCard from '../components/ClimateCard';
-import MonthChart from '../components/MonthChart';
-import YearChart from '../components/YearChart';
 import PRChart from '../components/PRChart';
 import DevicesTable from '../components/DevicesTable';
 import MedidorCard from '../components/MedidorCard';
@@ -44,15 +42,13 @@ const Dashboard: React.FC = () => {
           </div>
           <StatusCards clienteAtivo={clienteAtivo} />
           <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:12, marginBottom:12 }}>
-            <MainChart clienteAtivo={clienteAtivo} />
+            <MainChart clienteAtivo={clienteAtivo} period={period} />
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <BalanceCard clienteAtivo={clienteAtivo} />
               <ClimateCard />
             </div>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:12 }}>
-            <MonthChart />
-            <YearChart />
+          <div style={{ display:'grid', gridTemplateColumns:'320px', gap:12, marginBottom:12 }}>
             <PRChart />
           </div>
           <DevicesTable />

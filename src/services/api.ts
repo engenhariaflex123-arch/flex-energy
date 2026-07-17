@@ -38,6 +38,33 @@ export const getBalanco = async (clienteId: string, horas = 24) => {
   return res.data;
 };
 
+// Histórico agregado de energia (kWh) por dia/mês/ano - base para os
+// gráficos de coluna (mês/ano) e o gráfico de pizza (geração/consumo/saldo).
+export type PeriodoHistorico = 'dia' | 'mes' | 'ano';
+
+export interface PontoHistorico {
+  label: string;
+  geracao_kwh: number;
+  consumo_kwh: number;
+  saldo_kwh: number;
+}
+
+export interface HistoricoResponse {
+  cliente_id: string;
+  periodo: PeriodoHistorico;
+  pontos: PontoHistorico[];
+  totais: {
+    geracao_kwh: number;
+    consumo_kwh: number;
+    saldo_kwh: number;
+  };
+}
+
+export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico): Promise<HistoricoResponse> => {
+  const res = await api.get(`/historico/${clienteId}?periodo=${periodo}`);
+  return res.data;
+};
+
 export const enviarDados = async (dados: {
   cliente_id: string;
   consumo_kw: number;
@@ -86,6 +113,7 @@ interface CriarUsinaPayload {
   potencia_kwp?: number;
   foto_base64?: string;
   inversores: InversorPayload[];
+  email_cliente?: string;
 }
 
 export const criarMinhaUsina = async (dados: CriarUsinaPayload) => {
