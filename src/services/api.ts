@@ -65,6 +65,34 @@ export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico)
   return res.data;
 };
 
+// Irradiação acumulada (kWh/m²) - área sob a curva de irradiância.
+export interface IrradiacaoResponse {
+  cliente_id: string;
+  periodo: PeriodoHistorico;
+  pontos: { label: string; irradiacao_kwh_m2: number }[];
+  total_kwh_m2: number;
+}
+
+export const getIrradiacao = async (clienteId: string, periodo: PeriodoHistorico): Promise<IrradiacaoResponse> => {
+  const res = await api.get(`/irradiacao/${clienteId}?periodo=${periodo}`);
+  return res.data;
+};
+
+// Dados de cadastro da usina (potência instalada, contagem de inversores)
+export interface ClienteInfo {
+  cliente_id: string;
+  nome: string;
+  cidade: string | null;
+  estado: string | null;
+  potencia_kwp: number | null;
+  total_inversores: number;
+}
+
+export const getClienteInfo = async (clienteId: string): Promise<ClienteInfo> => {
+  const res = await api.get(`/cliente/${clienteId}/info`);
+  return res.data;
+};
+
 export const enviarDados = async (dados: {
   cliente_id: string;
   consumo_kw: number;

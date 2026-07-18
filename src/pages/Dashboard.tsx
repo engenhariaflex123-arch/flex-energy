@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import StatusCards from '../components/StatusCards';
+import OperacaoCards from '../components/OperacaoCards';
 import MainChart from '../components/MainChart';
 import BalanceCard from '../components/BalanceCard';
 import ClimateCard from '../components/ClimateCard';
@@ -42,6 +43,7 @@ const Dashboard: React.FC = () => {
             ⚠️ <strong>Inversor 2</strong> — Alarme ativo: sobretensão CA detectada às 14h22
           </div>
           <StatusCards clienteAtivo={clienteAtivo} />
+          <OperacaoCards clienteAtivo={clienteAtivo} />
           <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:12, marginBottom:12 }}>
             <MainChart clienteAtivo={clienteAtivo} period={period} />
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
