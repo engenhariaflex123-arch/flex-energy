@@ -28,8 +28,8 @@ api.interceptors.response.use(
   }
 );
 
-export const getDadosCliente = async (clienteId: string, horas = 24) => {
-  const res = await api.get(`/dados/${clienteId}?horas=${horas}`);
+export const getDadosCliente = async (clienteId: string, horas = 24, hoje = false) => {
+  const res = await api.get(`/dados/${clienteId}?horas=${horas}&hoje=${hoje}`);
   return res.data;
 };
 
@@ -109,8 +109,8 @@ export const getDadosInversor = async (clienteId: string, horas = 24) => {
   return res.data;
 };
 
-export const getDadosIrradiancia = async (clienteId: string, horas = 24) => {
-  const res = await api.get(`/irradiancia/${clienteId}?horas=${horas}`);
+export const getDadosIrradiancia = async (clienteId: string, horas = 24, hoje = false) => {
+  const res = await api.get(`/irradiancia/${clienteId}?horas=${horas}&hoje=${hoje}`);
   return res.data;
 };
 export const getResumoGrupo = async (grupoId: number) => {
