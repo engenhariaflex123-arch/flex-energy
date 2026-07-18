@@ -70,6 +70,7 @@ const VisaoGeral: React.FC = () => {
   const [novoEndereco, setNovoEndereco] = useState('');
   const [novoTipoInstalacao, setNovoTipoInstalacao] = useState('solo');
   const [novaPotenciaKwp, setNovaPotenciaKwp] = useState('');
+  const [novoTipoMedicao, setNovoTipoMedicao] = useState<'consumo_direto' | 'bidirecional'>('consumo_direto');
   const [fotoBase64, setFotoBase64] = useState('');
   const [fotoNomeArquivo, setFotoNomeArquivo] = useState('');
   const [inversores, setInversores] = useState<InversorForm[]>([]);
@@ -108,6 +109,7 @@ const VisaoGeral: React.FC = () => {
     setNovoEndereco('');
     setNovoTipoInstalacao('solo');
     setNovaPotenciaKwp('');
+    setNovoTipoMedicao('consumo_direto');
     setFotoBase64('');
     setFotoNomeArquivo('');
     setInversores([]);
@@ -158,6 +160,7 @@ const VisaoGeral: React.FC = () => {
         endereco: novoEndereco,
         tipo_instalacao: novoTipoInstalacao,
         potencia_kwp: novaPotenciaKwp ? Number(novaPotenciaKwp) : undefined,
+        tipo_medicao: novoTipoMedicao,
         foto_base64: fotoBase64 || undefined,
         inversores: inversores.map((inv) => ({
           marca: inv.marca,
@@ -316,6 +319,19 @@ const VisaoGeral: React.FC = () => {
                 <div>
                   <label style={labelStyle}>Potência (kWp)</label>
                   <input value={novaPotenciaKwp} onChange={(e) => setNovaPotenciaKwp(e.target.value)} placeholder="Ex: 75.5" type="number" step="0.01" style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>Tipo de medição do consumo</label>
+                <select value={novoTipoMedicao} onChange={(e) => setNovoTipoMedicao(e.target.value as 'consumo_direto' | 'bidirecional')} style={inputStyle}>
+                  <option value="consumo_direto">Medidor no ramal de cargas (consumo direto)</option>
+                  <option value="bidirecional">Medidor no padrão de entrada (bidirecional)</option>
+                </select>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                  {novoTipoMedicao === 'consumo_direto'
+                    ? 'O medidor mede o consumo total diretamente no ramal de cargas.'
+                    : 'O medidor mede a energia importada/exportada no ponto de conexão com a rede.'}
                 </div>
               </div>
 

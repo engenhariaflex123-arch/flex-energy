@@ -86,6 +86,7 @@ export interface ClienteInfo {
   estado: string | null;
   potencia_kwp: number | null;
   total_inversores: number;
+  tipo_medicao: 'consumo_direto' | 'bidirecional';
 }
 
 export const getClienteInfo = async (clienteId: string): Promise<ClienteInfo> => {
@@ -142,6 +143,7 @@ interface CriarUsinaPayload {
   foto_base64?: string;
   inversores: InversorPayload[];
   email_cliente?: string;
+  tipo_medicao?: 'consumo_direto' | 'bidirecional';
 }
 
 export const criarMinhaUsina = async (dados: CriarUsinaPayload) => {
