@@ -31,10 +31,10 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
     </div>
   );
   return (
-    <div style={{ position:'fixed', left:0, top:0, bottom:0, width:220, background:'#181C27', borderRight:'1px solid rgba(255,255,255,0.07)', display:'flex', flexDirection:'column', zIndex:100, overflowY:'auto' }}>
+    <div className="app-sidebar" style={{ position:'fixed', left:0, top:0, bottom:0, width:220, background:'#181C27', borderRight:'1px solid rgba(255,255,255,0.07)', display:'flex', flexDirection:'column', zIndex:100, overflowY:'auto' }}>
       <div style={{ padding:'1.25rem', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
         <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:26, fontWeight:700, color:'#F97316', lineHeight:1 }}>FLEX</div>
-        <div style={{ fontSize:13, color:'#F8FAFC', fontWeight:300, letterSpacing:'0.1em' }}>Energy</div>
+        <div style={{ fontSize:13, color:'#F8FAFC', fontWeight:300, letterSpacing:'0.1em' }}>Assistance</div>
         <div style={{ fontSize:10, color:'#64748B', marginTop:2 }}>Monitoramento Solar</div>
       </div>
       <div style={{ padding:'0.875rem 1.25rem', borderBottom:'1px solid rgba(255,255,255,0.07)', background:'rgba(249,115,22,0.08)' }}>

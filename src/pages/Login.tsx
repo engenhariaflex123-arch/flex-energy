@@ -44,7 +44,7 @@ const Login: React.FC = () => {
     <div style={{ minHeight:'100vh', background:'#0F1117', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'#181C27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:'2.5rem', width:380 }}>
         <div style={{ textAlign:'center', marginBottom:'2rem' }}>
-          <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:36, fontWeight:700, color:'#F97316' }}>FLEX Energy</div>
+          <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:36, fontWeight:700, color:'#F97316' }}>FLEX Assistance</div>
           <div style={{ fontSize:12, color:'#64748B', marginTop:4 }}>Plataforma de Monitoramento Solar</div>
         </div>
         <form onSubmit={handleLogin}>
@@ -63,7 +63,7 @@ const Login: React.FC = () => {
             {carregando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-        <p style={{ textAlign:'center', fontSize:11, color:'#64748B', marginTop:'1.5rem' }}>Flex Energy © 2026</p>
+        <p style={{ textAlign:'center', fontSize:11, color:'#64748B', marginTop:'1.5rem' }}>Flex Assistance © 2026</p>
       </div>
     </div>
   );
