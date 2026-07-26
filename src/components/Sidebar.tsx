@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMinhasUsinas } from '../services/api';
+import { getMinhasUsinas, getRelatorioDiarioPDF } from '../services/api';
 
 interface Props { open: boolean; clienteAtivo?: string; }
 const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
@@ -25,6 +25,25 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   }, [clienteAtivo]);
 
   if (!open) return null;
+
+  const baixarRelatorioPDF = async () => {
+    try {
+      const cid = clienteAtivo || localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id');
+      if (!cid) return;
+      const blob = await getRelatorioDiarioPDF(cid);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio-${cid}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.log('Não foi possível baixar o relatório PDF', err);
+    }
+  };
+
   const navItem = (icon: string, label: string, active = false, onClick?: () => void, arrow?: string) => (
     <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:10, padding:'0.6rem 1.25rem', fontSize:13, color: active ? '#F97316' : '#94A3B8', cursor:'pointer', borderLeft: active ? '3px solid #F97316' : '3px solid transparent', background: active ? 'rgba(249,115,22,0.08)' : 'transparent' }}>
       <span>{icon}</span><span style={{flex:1}}>{label}</span>{arrow && <span style={{fontSize:10}}>{arrow}</span>}
@@ -68,7 +87,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
         <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:'#64748B', textTransform:'uppercase', letterSpacing:'0.08em' }}>Análise</div>
         {navItem('📈','Performance (PR)')}
         {navItem('☁️','Irradiância')}
-        {navItem('📄','Exportar PDF')}
+        {navItem('📄','Exportar PDF', false, baixarRelatorioPDF)}
       </nav>
       <div style={{ padding:'1rem 1.25rem', borderTop:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:10 }}>
         <div style={{ width:32, height:32, borderRadius:'50%', background:'#F97316', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff' }}>
