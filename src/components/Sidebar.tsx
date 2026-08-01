@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMinhasUsinas, getRelatorioDiarioPDF } from '../services/api';
+import { getMinhasUsinas, getRelatorioDiarioPDF, getRelatorioMensalCompletoPDF } from '../services/api';
 
 interface Props { open: boolean; clienteAtivo?: string; }
 const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
@@ -41,6 +41,24 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.log('Não foi possível baixar o relatório PDF', err);
+    }
+  };
+
+  const baixarRelatorioMensal = async () => {
+    try {
+      const cid = clienteAtivo || localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id');
+      if (!cid) return;
+      const blob = await getRelatorioMensalCompletoPDF(cid);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio-mensal-${cid}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.log('Não foi possível baixar o relatório mensal', err);
     }
   };
 
@@ -88,6 +106,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
         {navItem('📈','Performance (PR)')}
         {navItem('☁️','Irradiância')}
         {navItem('📄','Exportar PDF', false, baixarRelatorioPDF)}
+        {navItem('🗓️','Relatório Mensal', false, baixarRelatorioMensal)}
       </nav>
       <div style={{ padding:'1rem 1.25rem', borderTop:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:10 }}>
         <div style={{ width:32, height:32, borderRadius:'50%', background:'#F97316', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff' }}>

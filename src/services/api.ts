@@ -156,3 +156,30 @@ export const getMinhasUsinas = async () => {
   const res = await api.get('/minhas-usinas');
   return res.data;
 };
+
+// Baixa o relatório diário em PDF (blob) — usado pelo botão "Exportar PDF"
+// da Sidebar.
+export const getRelatorioDiarioPDF = async (clienteId: string): Promise<Blob> => {
+  const res = await api.get(`/relatorio-diario/${clienteId}/pdf`, {
+    responseType: 'blob',
+  });
+  return res.data;
+};
+
+// Baixa o relatório mensal completo em PDF (blob) — usado pelo botão
+// "Relatório Mensal" da Sidebar. Se ano/mes não forem passados, o backend
+// usa o mês anterior completo automaticamente.
+export const getRelatorioMensalCompletoPDF = async (
+  clienteId: string,
+  ano?: number,
+  mes?: number
+): Promise<Blob> => {
+  const params = new URLSearchParams();
+  if (ano) params.append('ano', String(ano));
+  if (mes) params.append('mes', String(mes));
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const res = await api.get(`/relatorio-mensal-completo/${clienteId}/pdf${query}`, {
+    responseType: 'blob',
+  });
+  return res.data;
+};
