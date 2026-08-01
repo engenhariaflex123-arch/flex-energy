@@ -53,7 +53,11 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
     };
 
     const buscarHistorico = async (periodo: 'mes' | 'ano') => {
-      const res = await getHistorico(clienteAtivo, periodo);
+      // hoje=true: usa o mês/ano CALENDÁRIO (desde o dia 1, ou desde 1º de
+      // janeiro), não uma janela móvel de 31/365 dias corridos — senão
+      // "Mês" mistura pedaço do mês anterior, e "Ano" mistura o ano passado
+      // (mesmo bug corrigido antes no período "Dia", agora também aqui).
+      const res = await getHistorico(clienteAtivo, periodo, true);
       return res.pontos.map(p => ({
         hora: p.label,
         'Geração': p.geracao_kwh,

@@ -26,7 +26,9 @@ const PieChart: React.FC<PieChartProps> = ({ clienteAtivo, period }) => {
   useEffect(() => {
     const buscar = async () => {
       try {
-        const res = await getHistorico(clienteAtivo, period);
+        // hoje=true: mês/ano calendário, não janela móvel (ver nota em
+        // MainChart.tsx sobre o mesmo bug corrigido em 01/08/2026).
+        const res = await getHistorico(clienteAtivo, period, true);
         const { geracao_kwh, consumo_kwh, saldo_kwh } = res.totais;
         setDados([
           { name: 'Geração', value: Math.max(geracao_kwh, 0) },
