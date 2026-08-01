@@ -205,8 +205,8 @@ const VisaoGeral: React.FC = () => {
   const usinasOnline = resumo.usinas.filter((u) => u.status !== 'offline').length;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0F1117', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div className="visaogeral-content" style={{ minHeight: '100vh', background: '#0F1117', fontFamily: 'system-ui, sans-serif' }}>
+      <div className="visaogeral-header">
         <div>
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 32, fontWeight: 700, color: '#F97316' }}>
             {resumo.nome_grupo}
@@ -283,7 +283,8 @@ const VisaoGeral: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '2rem', width: 480, maxWidth: '100%' }}
+            className="usina-modal"
+            style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, width: 480, maxWidth: '100%' }}
           >
             <div style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC', marginBottom: '1.5rem' }}>Nova Usina</div>
             <form onSubmit={handleCriarUsina}>

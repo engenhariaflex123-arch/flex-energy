@@ -36,15 +36,20 @@ const Dashboard: React.FC = () => {
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
       <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} />
-      <div style={{ flex:1, marginLeft: sidebarOpen ? 220 : 0, transition:'margin 0.3s', minWidth:0 }}>
+      {/* Fundo escurecido atrás do menu, só aparece em telas pequenas (ver
+          responsive.css) — tocar nele fecha o menu, como um app nativo. */}
+      {sidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+      )}
+      <div className="app-content-area" style={{ flex:1, marginLeft: sidebarOpen ? 220 : 0, transition:'margin 0.3s', minWidth:0 }}>
         <Topbar period={period} setPeriod={setPeriod} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div key={clienteAtivo} style={{ padding:'1.25rem 1.5rem' }}>
+        <div key={clienteAtivo} className="dashboard-content">
           <div style={{ background:'rgba(234,179,8,0.1)', border:'1px solid rgba(234,179,8,0.3)', borderRadius:8, padding:'0.6rem 1rem', marginBottom:'1.25rem', display:'flex', alignItems:'center', gap:10, fontSize:12, color:'#EAB308' }}>
             ⚠️ <strong>Inversor 2</strong> — Alarme ativo: sobretensão CA detectada às 14h22
           </div>
           <StatusCards clienteAtivo={clienteAtivo} />
           <OperacaoCards clienteAtivo={clienteAtivo} />
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:12, marginBottom:12 }}>
+          <div className="dashboard-main-grid">
             <MainChart clienteAtivo={clienteAtivo} period={period} />
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <BalanceCard clienteAtivo={clienteAtivo} />
@@ -52,11 +57,11 @@ const Dashboard: React.FC = () => {
               <ClimateCard />
             </div>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'320px', gap:12, marginBottom:12 }}>
+          <div className="dashboard-fixed-block">
             <PRChart />
           </div>
           <DevicesTable />
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
+          <div className="grid-two-col" style={{ marginTop:12 }}>
            <InversorStatus clienteAtivo={clienteAtivo} />
           <IrradianciaCard clienteAtivo={clienteAtivo} />
           <div style={{ marginTop: 24 }}>
@@ -66,7 +71,7 @@ const Dashboard: React.FC = () => {
           <div style={{ marginBottom: 12 }}>
           <MedidorCard clienteAtivo={clienteAtivo} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-two-col">
           <StringsChart clienteAtivo={clienteAtivo} />
           <InversorChart clienteAtivo={clienteAtivo} />
           </div>

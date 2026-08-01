@@ -77,7 +77,7 @@ const OperacaoCards: React.FC<OperacaoCardsProps> = ({ clienteAtivo }) => {
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: '1.25rem' }}>
+    <div className="grid-cards-6">
       {cards.map((c, i) => (
         <div
           key={i}
