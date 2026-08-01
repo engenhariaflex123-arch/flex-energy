@@ -34,9 +34,12 @@ const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
       try {
         const [dados, historico, irrad, irradiacao] = await Promise.all([
           getDadosCliente(clienteAtivo, 1),
-          getHistorico(clienteAtivo, 'dia'),
+          // hoje=true: usa o dia calendário (00:00 até agora), não uma
+          // janela móvel de 24h — senão o total "Hoje" mistura parte de
+          // ontem com hoje (bug corrigido em 01/08/2026).
+          getHistorico(clienteAtivo, 'dia', true),
           getDadosIrradiancia(clienteAtivo, 1),
-          getIrradiacao(clienteAtivo, 'dia'),
+          getIrradiacao(clienteAtivo, 'dia', true),
         ]);
 
         const ultimaLeitura = dados?.dados?.[0];
@@ -73,7 +76,7 @@ const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: '1.25rem' }}>
+    <div className="grid-cards-6">
       {cards.map((c, i) => (
         <div key={i} style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '0.85rem', borderTop: `3px solid ${colors[c.color]}` }}>
           <div style={{ fontSize: 20, marginBottom: 6 }}>{c.icon}</div>

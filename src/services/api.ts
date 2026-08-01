@@ -60,8 +60,8 @@ export interface HistoricoResponse {
   };
 }
 
-export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico): Promise<HistoricoResponse> => {
-  const res = await api.get(`/historico/${clienteId}?periodo=${periodo}`);
+export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico, hoje = false): Promise<HistoricoResponse> => {
+  const res = await api.get(`/historico/${clienteId}?periodo=${periodo}&hoje=${hoje}`);
   return res.data;
 };
 
@@ -73,8 +73,8 @@ export interface IrradiacaoResponse {
   total_kwh_m2: number;
 }
 
-export const getIrradiacao = async (clienteId: string, periodo: PeriodoHistorico): Promise<IrradiacaoResponse> => {
-  const res = await api.get(`/irradiacao/${clienteId}?periodo=${periodo}`);
+export const getIrradiacao = async (clienteId: string, periodo: PeriodoHistorico, hoje = false): Promise<IrradiacaoResponse> => {
+  const res = await api.get(`/irradiacao/${clienteId}?periodo=${periodo}&hoje=${hoje}`);
   return res.data;
 };
 
