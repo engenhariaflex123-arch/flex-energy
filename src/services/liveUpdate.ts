@@ -32,7 +32,7 @@ export const verificarAtualizacao = async (): Promise<ResultadoVerificacao> => {
       return { status: 'atualizado', mensagem: 'Você já está na versão mais recente.' };
     }
 
-    const bundle = await CapacitorUpdater.download(latest);
+    const bundle = await CapacitorUpdater.download({ url: latest.url, version: latest.version });
     // set() já aplica a atualização e reinicia o app sozinho.
     await CapacitorUpdater.set({ id: bundle.id });
 
