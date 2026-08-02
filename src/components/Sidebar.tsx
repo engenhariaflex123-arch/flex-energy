@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMinhasUsinas, getRelatorioDiarioPDF, getRelatorioMensalCompletoPDF } from '../services/api';
+import { verificarAtualizacao } from '../services/liveUpdate';
 
 interface Props { open: boolean; clienteAtivo?: string; }
 const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
@@ -62,6 +63,27 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('cliente_id');
+    localStorage.removeItem('cliente_ativo');
+    localStorage.removeItem('grupo_id');
+    localStorage.removeItem('nome');
+    navigate('/login');
+  };
+
+  const [verificando, setVerificando] = useState(false);
+  const handleVerificarAtualizacao = async () => {
+    setVerificando(true);
+    try {
+      const resultado = await verificarAtualizacao();
+      window.alert(resultado.mensagem);
+    } finally {
+      setVerificando(false);
+    }
+  };
+
   const navItem = (icon: string, label: string, active = false, onClick?: () => void, arrow?: string) => (
     <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:10, padding:'0.6rem 1.25rem', fontSize:13, color: active ? '#F97316' : '#94A3B8', cursor:'pointer', borderLeft: active ? '3px solid #F97316' : '3px solid transparent', background: active ? 'rgba(249,115,22,0.08)' : 'transparent' }}>
       <span>{icon}</span><span style={{flex:1}}>{label}</span>{arrow && <span style={{fontSize:10}}>{arrow}</span>}
@@ -115,6 +137,22 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
         <div>
           <div style={{ fontSize:12, fontWeight:500 }}>{usinaAtual?.nome || 'Carregando...'}</div>
           <div style={{ fontSize:10, color:'#64748B' }}>Visualizador</div>
+        </div>
+      </div>
+      <div style={{ padding:'0.5rem 1.25rem 1rem', borderTop:'1px solid rgba(255,255,255,0.07)', display:'flex', flexDirection:'column', gap:4 }}>
+        <div
+          onClick={handleVerificarAtualizacao}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.5rem 0', fontSize:12, color: verificando ? '#64748B' : '#94A3B8', cursor: verificando ? 'default' : 'pointer' }}
+        >
+          <span>{verificando ? '⟳' : '🔄'}</span>
+          <span>{verificando ? 'Verificando...' : 'Verificar atualização'}</span>
+        </div>
+        <div
+          onClick={handleLogout}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.5rem 0', fontSize:12, color:'#F87171', cursor:'pointer' }}
+        >
+          <span>🚪</span>
+          <span>Sair</span>
         </div>
       </div>
     </div>
