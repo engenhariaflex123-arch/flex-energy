@@ -11,3 +11,34 @@ export const confirmarAtualizacao = () => {
     console.log('Erro ao confirmar atualização (capacitor-updater)', err);
   });
 };
+
+export type ResultadoVerificacao = {
+  status: 'atualizado' | 'aplicando' | 'erro' | 'web';
+  mensagem: string;
+};
+
+// Força o app a checar agora mesmo se existe um bundle novo no Capgo, sem
+// precisar fechar e abrir o app (que é quando a checagem automática roda).
+// Usado pelo botão "Verificar atualização" no menu lateral.
+export const verificarAtualizacao = async (): Promise<ResultadoVerificacao> => {
+  if (!Capacitor.isNativePlatform()) {
+    return { status: 'web', mensagem: 'Essa opção só se aplica ao aplicativo instalado (não ao site).' };
+  }
+
+  try {
+    const latest = await CapacitorUpdater.getLatest();
+
+    if (latest.kind === 'up_to_date' || !latest.url) {
+      return { status: 'atualizado', mensagem: 'Você já está na versão mais recente.' };
+    }
+
+    const bundle = await CapacitorUpdater.download(latest);
+    // set() já aplica a atualização e reinicia o app sozinho.
+    await CapacitorUpdater.set({ id: bundle.id });
+
+    return { status: 'aplicando', mensagem: 'Atualização encontrada! Aplicando agora, o app vai reiniciar.' };
+  } catch (err) {
+    console.log('Erro ao verificar atualização', err);
+    return { status: 'erro', mensagem: 'Não foi possível verificar atualização agora. Tenta de novo mais tarde.' };
+  }
+};
