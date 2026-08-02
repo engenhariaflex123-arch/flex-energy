@@ -8,6 +8,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   const [consumoOpen, setConsumoOpen] = useState(false);
   const [geracaoOpen, setGeracaoOpen] = useState(false);
   const [usinaAtual, setUsinaAtual] = useState<{ nome: string; cidade?: string; estado?: string } | null>(null);
+  const [verificando, setVerificando] = useState(false);
   const navigate = useNavigate();
   const grupoId = localStorage.getItem('grupo_id');
 
@@ -73,7 +74,6 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
     navigate('/login');
   };
 
-  const [verificando, setVerificando] = useState(false);
   const handleVerificarAtualizacao = async () => {
     setVerificando(true);
     try {
