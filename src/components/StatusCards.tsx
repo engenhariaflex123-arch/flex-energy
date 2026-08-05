@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDadosCliente, getHistorico, getDadosIrradiancia, getIrradiacao } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface StatusCardsProps {
   clienteAtivo: string;
@@ -14,10 +15,6 @@ interface CardInfo {
   color: string;
 }
 
-const colors: Record<string, string> = {
-  orange: '#F97316', green: '#16A34A', red: '#DC2626', yellow: '#EAB308', blue: '#3B82F6', purple: '#A855F7',
-};
-
 const fmt = (n: number) => n.toFixed(1).replace('.', ',');
 
 const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
@@ -28,6 +25,11 @@ const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
   const [irradiancia, setIrradiancia] = useState(0);
   const [irradiacaoHoje, setIrradiacaoHoje] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { cores } = useTheme();
+
+  const colors: Record<string, string> = {
+    orange: cores.laranja, green: cores.verde, red: cores.vermelho, yellow: cores.amarelo, blue: cores.azul, purple: cores.roxo,
+  };
 
   useEffect(() => {
     const buscar = async () => {
@@ -78,13 +80,13 @@ const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
   return (
     <div className="grid-cards-6">
       {cards.map((c, i) => (
-        <div key={i} style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '0.85rem', borderTop: `3px solid ${colors[c.color]}` }}>
+        <div key={i} style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 10, padding: '0.85rem', borderTop: `3px solid ${colors[c.color]}` }}>
           <div style={{ fontSize: 20, marginBottom: 6 }}>{c.icon}</div>
-          <div style={{ fontSize: 21, fontWeight: 700, lineHeight: 1, fontFamily: "'Barlow Condensed',sans-serif" }}>
-            {loading ? '—' : c.val} <span style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8' }}>{c.unit}</span>
+          <div style={{ fontSize: 21, fontWeight: 700, lineHeight: 1, fontFamily: "'Barlow Condensed',sans-serif", color: cores.text }}>
+            {loading ? '—' : c.val} <span style={{ fontSize: 12, fontWeight: 400, color: cores.text2 }}>{c.unit}</span>
           </div>
-          <div style={{ fontSize: 10, color: '#64748B', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{c.label}</div>
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{c.sub}</div>
+          <div style={{ fontSize: 10, color: cores.text3, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{c.label}</div>
+          <div style={{ fontSize: 11, color: cores.text2, marginTop: 2 }}>{c.sub}</div>
         </div>
       ))}
     </div>

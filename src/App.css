@@ -5,6 +5,13 @@
   --bg: #0F1117; --bg2: #181C27; --bg3: #1E2436;
   --border: rgba(255,255,255,0.07); --text: #F8FAFC; --text2: #94A3B8; --text3: #64748B;
 }
+/* Tema claro — ativado via data-theme="light" no <html>, controlado pelo
+   ThemeContext (botão de alternar na Sidebar). */
+[data-theme="light"] {
+  --bg: #F1F5F9; --bg2: #FFFFFF; --bg3: #F8FAFC;
+  --border: rgba(15,17,23,0.10); --text: #0F1117; --text2: #475569; --text3: #64748B;
+  --laranja-glow: rgba(249,115,22,0.10);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
 button { cursor: pointer; font-family: 'Inter', sans-serif; }

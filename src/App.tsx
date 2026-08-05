@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import VisaoGeral from './pages/VisaoGeral';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { inicializarPush } from './services/push';
 import { confirmarAtualizacao } from './services/liveUpdate';
 import './App.css';
@@ -22,28 +23,30 @@ function App() {
   }, []);
 
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/visao-geral"
-          element={
-            <ProtectedRoute>
-              <VisaoGeral />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </HashRouter>
+    <ThemeProvider>
+      <HashRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/visao-geral"
+            element={
+              <ProtectedRoute>
+                <VisaoGeral />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </HashRouter>
+    </ThemeProvider>
   );
 }
 

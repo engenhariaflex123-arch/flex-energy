@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMinhasUsinas, getRelatorioDiarioPDF, getRelatorioMensalCompletoPDF } from '../services/api';
 import { verificarAtualizacao } from '../services/liveUpdate';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Props { open: boolean; clienteAtivo?: string; }
 const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
@@ -11,6 +12,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   const [verificando, setVerificando] = useState(false);
   const navigate = useNavigate();
   const grupoId = localStorage.getItem('grupo_id');
+  const { mode, cores, toggleTheme } = useTheme();
 
   useEffect(() => {
     const buscar = async () => {
@@ -85,64 +87,71 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   };
 
   const navItem = (icon: string, label: string, active = false, onClick?: () => void, arrow?: string) => (
-    <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:10, padding:'0.6rem 1.25rem', fontSize:13, color: active ? '#F97316' : '#94A3B8', cursor:'pointer', borderLeft: active ? '3px solid #F97316' : '3px solid transparent', background: active ? 'rgba(249,115,22,0.08)' : 'transparent' }}>
+    <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:10, padding:'0.6rem 1.25rem', fontSize:13, color: active ? cores.laranja : cores.text2, cursor:'pointer', borderLeft: active ? `3px solid ${cores.laranja}` : '3px solid transparent', background: active ? cores.laranjaGlow : 'transparent' }}>
       <span>{icon}</span><span style={{flex:1}}>{label}</span>{arrow && <span style={{fontSize:10}}>{arrow}</span>}
     </div>
   );
   return (
-    <div className="app-sidebar" style={{ position:'fixed', left:0, top:0, bottom:0, width:220, background:'#181C27', borderRight:'1px solid rgba(255,255,255,0.07)', display:'flex', flexDirection:'column', zIndex:100, overflowY:'auto' }}>
-      <div style={{ padding:'1.25rem', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:26, fontWeight:700, color:'#F97316', lineHeight:1 }}>FLEX</div>
-        <div style={{ fontSize:13, color:'#F8FAFC', fontWeight:300, letterSpacing:'0.1em' }}>Assistance</div>
-        <div style={{ fontSize:10, color:'#64748B', marginTop:2 }}>Monitoramento Solar</div>
+    <div className="app-sidebar" style={{ position:'fixed', left:0, top:0, bottom:0, width:220, background:cores.bg2, borderRight:`1px solid ${cores.border}`, display:'flex', flexDirection:'column', zIndex:100, overflowY:'auto' }}>
+      <div style={{ padding:'1.25rem', borderBottom:`1px solid ${cores.border}` }}>
+        <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:26, fontWeight:700, color:cores.laranja, lineHeight:1 }}>FLEX</div>
+        <div style={{ fontSize:13, color:cores.text, fontWeight:300, letterSpacing:'0.1em' }}>Assistance</div>
+        <div style={{ fontSize:10, color:cores.text3, marginTop:2 }}>Monitoramento Solar</div>
       </div>
-      <div style={{ padding:'0.875rem 1.25rem', borderBottom:'1px solid rgba(255,255,255,0.07)', background:'rgba(249,115,22,0.08)' }}>
-        <div style={{ fontSize:10, color:'#F97316', textTransform:'uppercase', letterSpacing:'0.08em' }}>Cliente</div>
-        <div style={{ fontSize:13, fontWeight:600, marginTop:2 }}>{usinaAtual?.nome || 'Carregando...'}</div>
-        <div style={{ fontSize:11, color:'#64748B', marginTop:1 }}>📍 {usinaAtual?.cidade || ''}{usinaAtual?.estado ? `, ${usinaAtual.estado}` : ''}</div>
+      <div style={{ padding:'0.875rem 1.25rem', borderBottom:`1px solid ${cores.border}`, background:cores.laranjaGlow }}>
+        <div style={{ fontSize:10, color:cores.laranja, textTransform:'uppercase', letterSpacing:'0.08em' }}>Cliente</div>
+        <div style={{ fontSize:13, fontWeight:600, marginTop:2, color:cores.text }}>{usinaAtual?.nome || 'Carregando...'}</div>
+        <div style={{ fontSize:11, color:cores.text3, marginTop:1 }}>📍 {usinaAtual?.cidade || ''}{usinaAtual?.estado ? `, ${usinaAtual.estado}` : ''}</div>
       </div>
       {grupoId && (
         <div
           onClick={() => navigate('/visao-geral')}
-          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.7rem 1.25rem', fontSize:12, color:'#94A3B8', cursor:'pointer', borderBottom:'1px solid rgba(255,255,255,0.07)' }}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.7rem 1.25rem', fontSize:12, color:cores.text2, cursor:'pointer', borderBottom:`1px solid ${cores.border}` }}
         >
           <span>←</span><span>Voltar para Visão Geral</span>
         </div>
       )}
       <nav style={{ flex:1, paddingTop:'0.5rem' }}>
-        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:'#64748B', textTransform:'uppercase', letterSpacing:'0.08em' }}>Visão Geral</div>
+        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:cores.text3, textTransform:'uppercase', letterSpacing:'0.08em' }}>Visão Geral</div>
         {navItem('⚡','Dashboard', true)}
         {navItem('📊','Relatórios')}
         {navItem('🔔','Alarmes')}
-        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:'#64748B', textTransform:'uppercase', letterSpacing:'0.08em' }}>Consumo</div>
+        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:cores.text3, textTransform:'uppercase', letterSpacing:'0.08em' }}>Consumo</div>
         {navItem('🔌','Medidores', false, () => setConsumoOpen(!consumoOpen), consumoOpen ? '▴' : '▾')}
         {consumoOpen && ['Geral (Principal)','Ramal — Produção','Ramal — Administrativo','Ramal — Ar Condicionado'].map((r,i) => (
-          <div key={i} style={{ padding:'0.4rem 1.25rem 0.4rem 3rem', fontSize:12, color: i===0 ? '#F97316' : '#64748B', cursor:'pointer' }}>{i===0?'●':'○'} {r}</div>
+          <div key={i} style={{ padding:'0.4rem 1.25rem 0.4rem 3rem', fontSize:12, color: i===0 ? cores.laranja : cores.text3, cursor:'pointer' }}>{i===0?'●':'○'} {r}</div>
         ))}
-        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:'#64748B', textTransform:'uppercase', letterSpacing:'0.08em' }}>Geração</div>
+        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:cores.text3, textTransform:'uppercase', letterSpacing:'0.08em' }}>Geração</div>
         {navItem('☀️','Inversores', false, () => setGeracaoOpen(!geracaoOpen), geracaoOpen ? '▴' : '▾')}
         {geracaoOpen && ['Geral (Usina)','Inversor 1 — 10kW','Inversor 2 — 10kW','Inversor 3 — 15kW'].map((r,i) => (
-          <div key={i} style={{ padding:'0.4rem 1.25rem 0.4rem 3rem', fontSize:12, color: i===0 ? '#F97316' : '#64748B', cursor:'pointer' }}>{i===0?'●':'○'} {r}</div>
+          <div key={i} style={{ padding:'0.4rem 1.25rem 0.4rem 3rem', fontSize:12, color: i===0 ? cores.laranja : cores.text3, cursor:'pointer' }}>{i===0?'●':'○'} {r}</div>
         ))}
-        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:'#64748B', textTransform:'uppercase', letterSpacing:'0.08em' }}>Análise</div>
+        <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:cores.text3, textTransform:'uppercase', letterSpacing:'0.08em' }}>Análise</div>
         {navItem('📈','Performance (PR)')}
         {navItem('☁️','Irradiância')}
         {navItem('📄','Exportar PDF', false, baixarRelatorioPDF)}
         {navItem('🗓️','Relatório Mensal', false, baixarRelatorioMensal)}
       </nav>
-      <div style={{ padding:'1rem 1.25rem', borderTop:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:10 }}>
-        <div style={{ width:32, height:32, borderRadius:'50%', background:'#F97316', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff' }}>
+      <div style={{ padding:'1rem 1.25rem', borderTop:`1px solid ${cores.border}`, display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ width:32, height:32, borderRadius:'50%', background:cores.laranja, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff' }}>
           {usinaAtual?.nome?.charAt(0) || 'G'}
         </div>
         <div>
-          <div style={{ fontSize:12, fontWeight:500 }}>{usinaAtual?.nome || 'Carregando...'}</div>
-          <div style={{ fontSize:10, color:'#64748B' }}>Visualizador</div>
+          <div style={{ fontSize:12, fontWeight:500, color:cores.text }}>{usinaAtual?.nome || 'Carregando...'}</div>
+          <div style={{ fontSize:10, color:cores.text3 }}>Visualizador</div>
         </div>
       </div>
-      <div style={{ padding:'0.5rem 1.25rem 1rem', borderTop:'1px solid rgba(255,255,255,0.07)', display:'flex', flexDirection:'column', gap:4 }}>
+      <div style={{ padding:'0.5rem 1.25rem 1rem', borderTop:`1px solid ${cores.border}`, display:'flex', flexDirection:'column', gap:4 }}>
+        <div
+          onClick={toggleTheme}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.5rem 0', fontSize:12, color:cores.text2, cursor:'pointer' }}
+        >
+          <span>{mode === 'dark' ? '☀️' : '🌙'}</span>
+          <span>{mode === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
+        </div>
         <div
           onClick={handleVerificarAtualizacao}
-          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.5rem 0', fontSize:12, color: verificando ? '#64748B' : '#94A3B8', cursor: verificando ? 'default' : 'pointer' }}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'0.5rem 0', fontSize:12, color: verificando ? cores.text3 : cores.text2, cursor: verificando ? 'default' : 'pointer' }}
         >
           <span>{verificando ? '⟳' : '🔄'}</span>
           <span>{verificando ? 'Verificando...' : 'Verificar atualização'}</span>
