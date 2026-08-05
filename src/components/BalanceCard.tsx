@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getBalanco } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface BalanceCardProps {
   clienteAtivo: string;
@@ -7,6 +8,7 @@ interface BalanceCardProps {
 
 const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
   const [balanco, setBalanco] = useState<any>(null);
+  const { cores } = useTheme();
 
   useEffect(() => {
     const buscar = async () => {
@@ -29,32 +31,32 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
   const pct = Math.min(Math.abs(geracao / (geracao + consumo)) * 100, 100);
 
   return (
-    <div style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '1.25rem' }}>
-      <div style={{ fontSize: 10, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+    <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
+      <div style={{ fontSize: 10, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Saldo Energético — Hoje
       </div>
-      <div style={{ fontSize: 32, fontWeight: 700, color: positivo ? '#EAB308' : '#F97316', fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1 }}>
+      <div style={{ fontSize: 32, fontWeight: 700, color: positivo ? cores.amarelo : cores.laranja, fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1 }}>
         {positivo ? '+' : ''}{saldo.toFixed(2).replace('.', ',')} <span style={{ fontSize: 14, fontWeight: 400 }}>kW médio</span>
       </div>
-      <div style={{ fontSize: 11, color: '#64748B', marginTop: 4, marginBottom: 12 }}>
+      <div style={{ fontSize: 11, color: cores.text3, marginTop: 4, marginBottom: 12 }}>
         {positivo ? '✅ Geração maior que consumo' : '⚠️ Consumo maior que geração'}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#64748B', marginBottom: 4 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: cores.text3, marginBottom: 4 }}>
         <span>🔌 {consumo.toFixed(2)} kW</span>
         <span>☀️ {geracao.toFixed(2)} kW</span>
       </div>
-      <div style={{ height: 6, background: '#1E2436', borderRadius: 3, overflow: 'hidden', marginBottom: 16 }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: positivo ? '#16A34A' : '#DC2626', borderRadius: 3, transition: 'width 0.5s' }}></div>
+      <div style={{ height: 6, background: cores.bg3, borderRadius: 3, overflow: 'hidden', marginBottom: 16 }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: positivo ? cores.verde : cores.vermelho, borderRadius: 3, transition: 'width 0.5s' }}></div>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         {[
-          { val: geracao.toFixed(1), label: 'kW Geração', c: '#16A34A' },
-          { val: consumo.toFixed(1), label: 'kW Consumo', c: '#DC2626' },
-          { val: `R$ ${(saldo * 0.75 * 24).toFixed(0)}`, label: 'Economia/dia', c: '#F97316' }
+          { val: geracao.toFixed(1), label: 'kW Geração', c: cores.verde },
+          { val: consumo.toFixed(1), label: 'kW Consumo', c: cores.vermelho },
+          { val: `R$ ${(saldo * 0.75 * 24).toFixed(0)}`, label: 'Economia/dia', c: cores.laranja }
         ].map((s, i) => (
-          <div key={i} style={{ flex: 1, background: '#1E2436', borderRadius: 8, padding: '8px', textAlign: 'center' }}>
+          <div key={i} style={{ flex: 1, background: cores.bg3, borderRadius: 8, padding: '8px', textAlign: 'center' }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: s.c }}>{s.val}</div>
-            <div style={{ fontSize: 10, color: '#64748B' }}>{s.label}</div>
+            <div style={{ fontSize: 10, color: cores.text3 }}>{s.label}</div>
           </div>
         ))}
       </div>

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { getDadosCliente, getDadosIrradiancia, getHistorico } from '../services/api';
-
-const tt = { contentStyle: { background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 } };
+import { useTheme } from '../contexts/ThemeContext';
 
 interface MainChartProps {
   clienteAtivo: string;
@@ -20,16 +19,20 @@ interface SerieToggle {
   cor: string;
 }
 
-const SERIES: SerieToggle[] = [
-  { key: 'Geração', cor: '#16A34A' },
-  { key: 'Consumo', cor: '#DC2626' },
-  { key: 'Irradiância', cor: '#3B82F6' },
-];
-
 const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [visiveis, setVisiveis] = useState<Record<string, boolean>>({ 'Geração': true, 'Consumo': true, 'Irradiância': true });
+  const { cores } = useTheme();
+
+  const tt = { contentStyle: { background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 12, color: cores.text } };
+  const gridStroke = cores.border;
+
+  const SERIES: SerieToggle[] = [
+    { key: 'Geração', cor: cores.verde },
+    { key: 'Consumo', cor: cores.vermelho },
+    { key: 'Irradiância', cor: cores.azul },
+  ];
 
   useEffect(() => {
     const buscarDia = async () => {
@@ -53,7 +56,11 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
     };
 
     const buscarHistorico = async (periodo: 'mes' | 'ano') => {
-      const res = await getHistorico(clienteAtivo, periodo);
+      // hoje=true: usa o mês/ano CALENDÁRIO (desde o dia 1, ou desde 1º de
+      // janeiro), não uma janela móvel de 31/365 dias corridos — senão
+      // "Mês" mistura pedaço do mês anterior, e "Ano" mistura o ano passado
+      // (mesmo bug corrigido antes no período "Dia", agora também aqui).
+      const res = await getHistorico(clienteAtivo, periodo, true);
       return res.pontos.map(p => ({
         hora: p.label,
         'Geração': p.geracao_kwh,
@@ -86,16 +93,16 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
   const toggle = (key: string) => setVisiveis(v => ({ ...v, [key]: !v[key] }));
 
   return (
-    <div style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '1.25rem' }}>
+    <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
       <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>{titulo}</div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{subtitulo}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: cores.text }}>{titulo}</div>
+          <div style={{ fontSize: 11, color: cores.text3, marginTop: 2 }}>{subtitulo}</div>
         </div>
-        {loading && <div style={{ fontSize: 11, color: '#F97316' }}>⟳ Carregando...</div>}
+        {loading && <div style={{ fontSize: 11, color: cores.laranja }}>⟳ Carregando...</div>}
       </div>
       {!loading && data.length === 0 ? (
-        <div style={{ color: '#64748B', fontSize: 12, textAlign: 'center', padding: '3rem 0' }}>Sem dados neste período ainda.</div>
+        <div style={{ color: cores.text3, fontSize: 12, textAlign: 'center', padding: '3rem 0' }}>Sem dados neste período ainda.</div>
       ) : (
         <>
           <ResponsiveContainer width="100%" height={220}>
@@ -103,35 +110,35 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
               <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#16A34A" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#16A34A" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor={cores.verde} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={cores.verde} stopOpacity={0.02} />
                   </linearGradient>
                   <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#DC2626" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#DC2626" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor={cores.vermelho} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={cores.vermelho} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="hora" tick={{ fill: '#64748B', fontSize: 10 }} tickLine={false} interval="preserveStartEnd" />
-                <YAxis yAxisId="kw" tick={{ fill: '#64748B', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} interval="preserveStartEnd" />
+                <YAxis yAxisId="kw" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
                 {temIrradiancia && (
-                  <YAxis yAxisId="wm2" orientation="right" tick={{ fill: '#64748B', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'W/m²'} />
+                  <YAxis yAxisId="wm2" orientation="right" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'W/m²'} />
                 )}
                 <Tooltip {...tt} />
-                {visiveis['Geração'] && <Area yAxisId="kw" type="monotone" dataKey="Geração" stroke="#16A34A" strokeWidth={2} fill="url(#gG)" />}
-                {visiveis['Consumo'] && <Area yAxisId="kw" type="monotone" dataKey="Consumo" stroke="#DC2626" strokeWidth={2} fill="url(#gC)" />}
+                {visiveis['Geração'] && <Area yAxisId="kw" type="monotone" dataKey="Geração" stroke={cores.verde} strokeWidth={2} fill="url(#gG)" />}
+                {visiveis['Consumo'] && <Area yAxisId="kw" type="monotone" dataKey="Consumo" stroke={cores.vermelho} strokeWidth={2} fill="url(#gC)" />}
                 {temIrradiancia && visiveis['Irradiância'] && (
-                  <Line yAxisId="wm2" type="monotone" dataKey="Irradiância" stroke="#3B82F6" strokeWidth={2} dot={false} connectNulls />
+                  <Line yAxisId="wm2" type="monotone" dataKey="Irradiância" stroke={cores.azul} strokeWidth={2} dot={false} connectNulls />
                 )}
               </ComposedChart>
             ) : (
               <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="hora" tick={{ fill: '#64748B', fontSize: 10 }} tickLine={false} interval={period === 'mes' ? 2 : 0} />
-                <YAxis tick={{ fill: '#64748B', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} interval={period === 'mes' ? 2 : 0} />
+                <YAxis tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
                 <Tooltip {...tt} />
-                {visiveis['Geração'] && <Bar dataKey="Geração" fill="#16A34A" radius={[4, 4, 0, 0]} opacity={0.85} />}
-                {visiveis['Consumo'] && <Bar dataKey="Consumo" fill="#DC2626" radius={[4, 4, 0, 0]} opacity={0.65} />}
+                {visiveis['Geração'] && <Bar dataKey="Geração" fill={cores.verde} radius={[4, 4, 0, 0]} opacity={0.85} />}
+                {visiveis['Consumo'] && <Bar dataKey="Consumo" fill={cores.vermelho} radius={[4, 4, 0, 0]} opacity={0.65} />}
               </BarChart>
             )}
           </ResponsiveContainer>
@@ -139,7 +146,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
           {/* Checkboxes para ocultar/mostrar cada série, logo abaixo da linha do tempo */}
           <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
             {SERIES.filter(s => s.key !== 'Irradiância' || temIrradiancia).map(s => (
-              <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: visiveis[s.key] ? '#E2E8F0' : '#64748B', cursor: 'pointer', userSelect: 'none' }}>
+              <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: visiveis[s.key] ? cores.text : cores.text3, cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
                   checked={visiveis[s.key]}

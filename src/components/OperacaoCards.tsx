@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getClienteInfo, getDadosInversor, getDadosIrradiancia, getDadosCliente } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface OperacaoCardsProps {
   clienteAtivo: string;
@@ -15,8 +16,11 @@ const STATUS_MAP: Record<string, 'normal' | 'offline' | 'alarme' | 'falha'> = {
   falha: 'falha',
 };
 
+const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+
 const OperacaoCards: React.FC<OperacaoCardsProps> = ({ clienteAtivo }) => {
   const navigate = useNavigate();
+  const { cores } = useTheme();
   const [totalInversores, setTotalInversores] = useState(0);
   const [statusAtual, setStatusAtual] = useState<'normal' | 'offline' | 'alarme' | 'falha'>('normal');
   const [potenciaKwp, setPotenciaKwp] = useState<number | null>(null);
@@ -67,6 +71,10 @@ const OperacaoCards: React.FC<OperacaoCardsProps> = ({ clienteAtivo }) => {
   const potenciaEsperadaKw = potenciaKwp ? (irradiancia / 1000) * potenciaKwp : 0;
   const performancePct = potenciaEsperadaKw > 0 ? (potenciaGeracao / potenciaEsperadaKw) * 100 : 0;
 
+  const colors: Record<string, string> = {
+    green: cores.verde, gray: cores.text3, yellow: cores.amarelo, red: cores.vermelho, blue: cores.azul, orange: cores.laranja,
+  };
+
   const cards = [
     { icon: '✅', val: String(contagem.normal), unit: '', label: 'Normal', sub: 'Inversores ok', color: 'green', onClick: () => navigate('/inversores?status=normal') },
     { icon: '⭕', val: String(contagem.offline), unit: '', label: 'Offline', sub: 'Sem comunicação', color: 'gray', onClick: () => navigate('/inversores?status=offline') },
@@ -83,28 +91,22 @@ const OperacaoCards: React.FC<OperacaoCardsProps> = ({ clienteAtivo }) => {
           key={i}
           onClick={c.onClick}
           style={{
-            background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '0.85rem',
-            borderTop: `3px solid ${COLORS[c.color]}`, cursor: c.onClick ? 'pointer' : 'default', transition: 'background 0.15s',
+            background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 10, padding: '0.85rem',
+            borderTop: `3px solid ${colors[c.color]}`, cursor: c.onClick ? 'pointer' : 'default', transition: 'background 0.15s',
           }}
-          onMouseEnter={e => { if (c.onClick) e.currentTarget.style.background = '#1E2436'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#181C27'; }}
+          onMouseEnter={e => { if (c.onClick) e.currentTarget.style.background = cores.bg3; }}
+          onMouseLeave={e => { e.currentTarget.style.background = cores.bg2; }}
         >
           <div style={{ fontSize: 20, marginBottom: 6 }}>{c.icon}</div>
-          <div style={{ fontSize: 21, fontWeight: 700, lineHeight: 1, fontFamily: "'Barlow Condensed',sans-serif" }}>
-            {loading ? '—' : c.val} <span style={{ fontSize: 12, fontWeight: 400, color: '#94A3B8' }}>{c.unit}</span>
+          <div style={{ fontSize: 21, fontWeight: 700, lineHeight: 1, fontFamily: "'Barlow Condensed',sans-serif", color: cores.text }}>
+            {loading ? '—' : c.val} <span style={{ fontSize: 12, fontWeight: 400, color: cores.text2 }}>{c.unit}</span>
           </div>
-          <div style={{ fontSize: 10, color: '#64748B', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{c.label}</div>
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{c.sub}</div>
+          <div style={{ fontSize: 10, color: cores.text3, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{c.label}</div>
+          <div style={{ fontSize: 11, color: cores.text2, marginTop: 2 }}>{c.sub}</div>
         </div>
       ))}
     </div>
   );
-};
-
-const fmt = (n: number) => n.toFixed(1).replace('.', ',');
-
-const COLORS: Record<string, string> = {
-  green: '#16A34A', gray: '#64748B', yellow: '#EAB308', red: '#DC2626', blue: '#3B82F6', orange: '#F97316',
 };
 
 export default OperacaoCards;
