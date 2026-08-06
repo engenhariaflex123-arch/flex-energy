@@ -124,7 +124,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
         <div style={{ color: cores.text3, fontSize: 12, textAlign: 'center', padding: '3rem 0' }}>Sem dados neste período ainda.</div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={340}>
             {period === 'dia' ? (
               <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
