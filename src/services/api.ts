@@ -38,6 +38,25 @@ export const getBalanco = async (clienteId: string, horas = 24) => {
   return res.data;
 };
 
+export interface BalancoHoje {
+  cliente_id: string;
+  geracao_kwh: number;
+  consumo_kwh: number;
+  consumo_instantaneo_kwh: number;
+  energia_injetada_kwh: number;
+  saldo_kwh: number;
+  fonte_injecao: 'medido' | 'estimado';
+  tipo_medicao: string;
+}
+
+// Card "Saldo Energético — Hoje": usa as fórmulas reais (energia injetada
+// e consumida, medidas de verdade quando o cliente tem medidor bidirecional
+// no padrão de entrada), não uma média simples de 24h.
+export const getBalancoHoje = async (clienteId: string): Promise<BalancoHoje> => {
+  const res = await api.get(`/balanco-hoje/${clienteId}`);
+  return res.data;
+};
+
 // Histórico agregado de energia (kWh) por dia/mês/ano - base para os
 // gráficos de coluna (mês/ano) e o gráfico de pizza (geração/consumo/saldo).
 export type PeriodoHistorico = 'dia' | 'mes' | 'ano';
