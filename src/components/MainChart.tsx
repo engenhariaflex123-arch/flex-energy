@@ -38,7 +38,15 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
   const [totais, setTotais] = useState<Totais | null>(null);
   const [loading, setLoading] = useState(true);
   const [visiveis, setVisiveis] = useState<Record<string, boolean>>({ 'Geração': true, 'Consumo': true, 'Irradiância': true });
+  const [telaCheia, setTelaCheia] = useState(false);
   const { cores } = useTheme();
+
+  useEffect(() => {
+    if (!telaCheia) return;
+    const aoTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape') setTelaCheia(false); };
+    window.addEventListener('keydown', aoTeclar);
+    return () => window.removeEventListener('keydown', aoTeclar);
+  }, [telaCheia]);
 
   const tt = { contentStyle: { background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 12, color: cores.text } };
   const gridStroke = cores.border;
@@ -112,19 +120,33 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
   const toggle = (key: string) => setVisiveis(v => ({ ...v, [key]: !v[key] }));
 
   return (
-    <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
+    <div style={telaCheia ? {
+      position: 'fixed', inset: 0, zIndex: 300, background: cores.bg2,
+      padding: '1.5rem', overflowY: 'auto',
+    } : {
+      background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem',
+    }}>
       <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color: cores.text }}>{titulo}</div>
           <div style={{ fontSize: 11, color: cores.text3, marginTop: 2 }}>{subtitulo}</div>
         </div>
-        {loading && <div style={{ fontSize: 11, color: cores.laranja }}>⟳ Carregando...</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {loading && <div style={{ fontSize: 11, color: cores.laranja }}>⟳ Carregando...</div>}
+          <button
+            onClick={() => setTelaCheia(v => !v)}
+            title={telaCheia ? 'Sair da tela cheia' : 'Expandir para tela cheia'}
+            style={{ background: 'transparent', border: `1px solid ${cores.border}`, borderRadius: 6, padding: '4px 8px', color: cores.text2, fontSize: 14, cursor: 'pointer' }}
+          >
+            {telaCheia ? '✕' : '⛶'}
+          </button>
+        </div>
       </div>
       {!loading && data.length === 0 ? (
         <div style={{ color: cores.text3, fontSize: 12, textAlign: 'center', padding: '3rem 0' }}>Sem dados neste período ainda.</div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={340}>
+          <ResponsiveContainer width="100%" height={telaCheia ? window.innerHeight - 260 : 420}>
             {period === 'dia' ? (
               <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
