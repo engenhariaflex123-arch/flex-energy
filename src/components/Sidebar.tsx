@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getMinhasUsinas, getRelatorioDiarioPDF, getRelatorioMensalCompletoPDF } from '../services/api';
 import { verificarAtualizacao } from '../services/liveUpdate';
 import { useTheme } from '../contexts/ThemeContext';
@@ -11,6 +11,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   const [usinaAtual, setUsinaAtual] = useState<{ nome: string; cidade?: string; estado?: string } | null>(null);
   const [verificando, setVerificando] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const grupoId = localStorage.getItem('grupo_id');
   const { mode, cores, toggleTheme } = useTheme();
 
@@ -29,6 +30,11 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   }, [clienteAtivo]);
 
   if (!open) return null;
+
+  const irPara = (rota: string) => {
+    const params = new URLSearchParams(location.search);
+    navigate(`${rota}?${params.toString()}`);
+  };
 
   const baixarRelatorioPDF = async () => {
     try {
@@ -113,8 +119,8 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
       )}
       <nav style={{ flex:1, paddingTop:'0.5rem' }}>
         <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:cores.text3, textTransform:'uppercase', letterSpacing:'0.08em' }}>Visão Geral</div>
-        {navItem('⚡','Dashboard', true)}
-        {navItem('📊','Relatórios')}
+        {navItem('⚡','Dashboard', location.pathname === '/dashboard', () => irPara('/dashboard'))}
+        {navItem('🔎','Análise', location.pathname === '/analise', () => irPara('/analise'))}
         {navItem('🔔','Alarmes')}
         <div style={{ padding:'0.5rem 1.25rem 0.25rem', fontSize:10, color:cores.text3, textTransform:'uppercase', letterSpacing:'0.08em' }}>Consumo</div>
         {navItem('🔌','Medidores', false, () => setConsumoOpen(!consumoOpen), consumoOpen ? '▴' : '▾')}

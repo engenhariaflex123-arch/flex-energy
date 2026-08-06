@@ -20,9 +20,6 @@ const Topbar: React.FC<Props> = ({ period, setPeriod, onToggleSidebar }) => {
             {p.charAt(0).toUpperCase()+p.slice(1)}
           </button>
         ))}
-        <div style={{ display:'flex', alignItems:'center', gap:5, background:'rgba(220,38,38,0.1)', color:'#DC2626', padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600 }}>
-          <span style={{ width:6, height:6, borderRadius:'50%', background:'#DC2626', display:'inline-block' }}></span> 1 offline
-        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 // tudo no lado do cliente (#/dashboard), o que funciona em qualquer ambiente.
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
+import Analise from './pages/Analise';
 import Login from './pages/Login';
 import VisaoGeral from './pages/VisaoGeral';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -40,6 +41,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analise"
+            element={
+              <ProtectedRoute>
+                <Analise />
               </ProtectedRoute>
             }
           />
