@@ -8,10 +8,22 @@ interface MainChartProps {
   period: 'dia' | 'mes' | 'ano';
 }
 
+interface Totais {
+  geracao_kwh: number;
+  consumo_kwh: number;
+  saldo_kwh: number;
+}
+
 const TITULOS: Record<MainChartProps['period'], { titulo: string; subtitulo: string }> = {
   dia:  { titulo: 'Geração × Consumo — Hoje',  subtitulo: 'Hoje, 00:00–23:59 · dados reais' },
   mes:  { titulo: 'Geração × Consumo — Mês',   subtitulo: 'Um ponto por dia · dados reais' },
   ano:  { titulo: 'Geração × Consumo — Ano',   subtitulo: 'Um ponto por mês · dados reais' },
+};
+
+const LABEL_TOTAL: Record<MainChartProps['period'], string> = {
+  dia: '',
+  mes: 'Total do Mês',
+  ano: 'Total do Ano',
 };
 
 interface SerieToggle {
@@ -19,8 +31,11 @@ interface SerieToggle {
   cor: string;
 }
 
+const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+
 const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
   const [data, setData] = useState<any[]>([]);
+  const [totais, setTotais] = useState<Totais | null>(null);
   const [loading, setLoading] = useState(true);
   const [visiveis, setVisiveis] = useState<Record<string, boolean>>({ 'Geração': true, 'Consumo': true, 'Irradiância': true });
   const { cores } = useTheme();
@@ -47,12 +62,13 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
       });
 
       const dadosAsc = (resDados?.dados || []).slice().reverse();
-      return dadosAsc.map((d: any) => ({
+      const pontos = dadosAsc.map((d: any) => ({
         hora: new Date(d.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         'Geração': Number(d.geracao_kw),
         'Consumo': Number(d.consumo_kw),
         'Irradiância': irradPorTimestamp[d.timestamp] ?? null,
       }));
+      return { pontos, totais: null as Totais | null };
     };
 
     const buscarHistorico = async (periodo: 'mes' | 'ano') => {
@@ -61,17 +77,19 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
       // "Mês" mistura pedaço do mês anterior, e "Ano" mistura o ano passado
       // (mesmo bug corrigido antes no período "Dia", agora também aqui).
       const res = await getHistorico(clienteAtivo, periodo, true);
-      return res.pontos.map(p => ({
+      const pontos = res.pontos.map(p => ({
         hora: p.label,
         'Geração': p.geracao_kwh,
         'Consumo': p.consumo_kwh,
       }));
+      return { pontos, totais: res.totais as Totais };
     };
 
     const buscar = async () => {
       try {
-        const formatado = period === 'dia' ? await buscarDia() : await buscarHistorico(period);
-        setData(formatado);
+        const resultado = period === 'dia' ? await buscarDia() : await buscarHistorico(period);
+        setData(resultado.pontos);
+        setTotais(resultado.totais);
       } catch (err) {
         console.log('Erro ao buscar dados:', err);
       } finally {
@@ -81,6 +99,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
 
     setLoading(true);
     setData([]);
+    setTotais(null);
     buscar();
     const interval = period === 'dia' ? setInterval(buscar, 30000) : undefined;
     return () => { if (interval) clearInterval(interval); };
@@ -158,6 +177,36 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
               </label>
             ))}
           </div>
+
+          {/* Card com o total do período — só aparece em Mês/Ano, não em Dia */}
+          {totais && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${cores.border}` }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 9, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                  {LABEL_TOTAL[period]} — Geração
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: cores.verde, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                  {fmt(totais.geracao_kwh)} <span style={{ fontSize: 11, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 9, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                  {LABEL_TOTAL[period]} — Consumo
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                  {fmt(totais.consumo_kwh)} <span style={{ fontSize: 11, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 9, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                  {LABEL_TOTAL[period]} — Saldo
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: totais.saldo_kwh >= 0 ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                  {totais.saldo_kwh >= 0 ? '+' : ''}{fmt(totais.saldo_kwh)} <span style={{ fontSize: 11, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
