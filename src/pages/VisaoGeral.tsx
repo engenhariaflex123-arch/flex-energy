@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getResumoGrupo, criarMinhaUsina } from '../services/api';
+import { useTheme, Cores } from '../contexts/ThemeContext';
 
 interface Usina {
   cliente_id: string;
@@ -11,6 +12,9 @@ interface Usina {
   geracao_kw: number;
   consumo_kw: number;
   ultima_leitura: string | null;
+  geracao_hoje_kwh: number;
+  consumo_hoje_kwh: number;
+  saldo_hoje_kwh: number;
 }
 
 interface Resumo {
@@ -19,6 +23,9 @@ interface Resumo {
   total_usinas: number;
   total_geracao_kw: number;
   total_consumo_kw: number;
+  total_geracao_hoje_kwh: number;
+  total_consumo_hoje_kwh: number;
+  total_saldo_hoje_kwh: number;
   usinas: Usina[];
 }
 
@@ -34,11 +41,11 @@ interface InversorForm {
   strings: StringForm[];
 }
 
-const statusCor: Record<string, string> = {
-  produzindo: '#22C55E',
-  online: '#3B82F6',
-  offline: '#EF4444',
-};
+const getStatusCor = (cores: Cores): Record<string, string> => ({
+  produzindo: cores.verde,
+  online: cores.azul,
+  offline: cores.vermelho,
+});
 
 const statusLabel: Record<string, string> = {
   produzindo: 'Produzindo',
@@ -58,6 +65,8 @@ const novoInversorVazio = (): InversorForm => ({
 });
 
 const VisaoGeral: React.FC = () => {
+  const { mode, cores, toggleTheme } = useTheme();
+  const statusCor = getStatusCor(cores);
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -187,7 +196,7 @@ const VisaoGeral: React.FC = () => {
 
   if (carregando) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0F1117', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+      <div style={{ minHeight: '100vh', background: cores.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cores.text2 }}>
         Carregando...
       </div>
     );
@@ -195,56 +204,88 @@ const VisaoGeral: React.FC = () => {
 
   if (erro || !resumo) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0F1117', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}>
+      <div style={{ minHeight: '100vh', background: cores.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cores.vermelho }}>
         {erro || 'Nenhum dado encontrado'}
       </div>
     );
   }
 
   const saldo = resumo.total_geracao_kw - resumo.total_consumo_kw;
+  const saldoHoje = resumo.total_saldo_hoje_kwh;
   const usinasOnline = resumo.usinas.filter((u) => u.status !== 'offline').length;
 
   return (
-    <div className="visaogeral-content" style={{ minHeight: '100vh', background: '#0F1117', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="visaogeral-content" style={{ minHeight: '100vh', background: cores.bg, fontFamily: 'system-ui, sans-serif' }}>
       <div className="visaogeral-header">
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 32, fontWeight: 700, color: '#F97316' }}>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 32, fontWeight: 700, color: cores.laranja }}>
             {resumo.nome_grupo}
           </div>
-          <div style={{ fontSize: 13, color: '#64748B' }}>Visão Geral das Usinas</div>
+          <div style={{ fontSize: 13, color: cores.text3 }}>Visão Geral das Usinas</div>
         </div>
-        <button
-          onClick={() => setModalAberto(true)}
-          style={{ background: '#F97316', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-        >
-          + Nova Usina
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={toggleTheme}
+            title={mode === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`,
+              borderRadius: 8, padding: '10px 14px', fontSize: 13, cursor: 'pointer',
+            }}
+          >
+            <span>{mode === 'dark' ? '☀️' : '🌙'}</span>
+            <span>{mode === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
+          </button>
+          <button
+            onClick={() => setModalAberto(true)}
+            style={{ background: cores.laranja, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            + Nova Usina
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '2rem' }}>
-        <Card titulo="TOTAL DE USINAS" valor={String(resumo.total_usinas)} sub={`${usinasOnline} ativas`} cor="#F97316" />
-        <Card titulo="GERAÇÃO ATUAL" valor={`${resumo.total_geracao_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor="#22C55E" />
-        <Card titulo="CONSUMO ATUAL" valor={`${resumo.total_consumo_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor="#F87171" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '1rem' }}>
+        <Card cores={cores} titulo="TOTAL DE USINAS" valor={String(resumo.total_usinas)} sub={`${usinasOnline} ativas`} cor={cores.laranja} />
+        <Card cores={cores} titulo="GERAÇÃO ATUAL" valor={`${resumo.total_geracao_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor={cores.verde} />
+        <Card cores={cores} titulo="CONSUMO ATUAL" valor={`${resumo.total_consumo_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor={cores.vermelho} />
         <Card
+          cores={cores}
           titulo="SALDO ENERGÉTICO"
           valor={`${saldo >= 0 ? '+' : ''}${saldo.toFixed(2)} kW`}
           sub={saldo >= 0 ? 'Exportando energia' : 'Importando energia'}
-          cor={saldo >= 0 ? '#22C55E' : '#F87171'}
+          cor={saldo >= 0 ? cores.verde : cores.vermelho}
         />
       </div>
 
-      <div style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '1.5rem' }}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#F8FAFC', marginBottom: '1rem' }}>Usinas</div>
+      <div style={{ fontSize: 11, color: cores.text3, letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' }}>
+        Acumulado de hoje
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '2rem' }}>
+        <Card cores={cores} titulo="GERAÇÃO HOJE" valor={`${resumo.total_geracao_hoje_kwh.toFixed(2)} kWh`} sub="Acumulado do dia — todas as usinas" cor={cores.verde} />
+        <Card cores={cores} titulo="CONSUMO HOJE" valor={`${resumo.total_consumo_hoje_kwh.toFixed(2)} kWh`} sub="Acumulado do dia — todas as usinas" cor={cores.vermelho} />
+        <Card
+          cores={cores}
+          titulo="SALDO HOJE"
+          valor={`${saldoHoje >= 0 ? '+' : ''}${saldoHoje.toFixed(2)} kWh`}
+          sub={saldoHoje >= 0 ? 'Exportou mais do que consumiu' : 'Consumiu mais do que exportou'}
+          cor={saldoHoje >= 0 ? cores.verde : cores.vermelho}
+        />
+      </div>
+
+      <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 16, padding: '1.5rem' }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: cores.text, marginBottom: '1rem' }}>Usinas</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <Th>Usina</Th>
-                <Th>Localização</Th>
-                <Th>Status</Th>
-                <Th>Geração</Th>
-                <Th>Consumo</Th>
-                <Th>Última leitura</Th>
+              <tr style={{ borderBottom: `1px solid ${cores.border}` }}>
+                <Th cores={cores}>Usina</Th>
+                <Th cores={cores}>Localização</Th>
+                <Th cores={cores}>Status</Th>
+                <Th cores={cores}>Geração</Th>
+                <Th cores={cores}>Consumo</Th>
+                <Th cores={cores}>Saldo hoje</Th>
+                <Th cores={cores}>Última leitura</Th>
               </tr>
             </thead>
             <tbody>
@@ -252,11 +293,11 @@ const VisaoGeral: React.FC = () => {
                 <tr
                   key={usina.cliente_id}
                   onClick={() => navigate(`/dashboard?cliente=${usina.cliente_id}`)}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}
+                  style={{ borderBottom: `1px solid ${cores.border}`, cursor: 'pointer' }}
                 >
-                  <Td>{usina.nome}</Td>
-                  <Td>{usina.cidade}, {usina.estado}</Td>
-                  <Td>
+                  <Td cores={cores}>{usina.nome}</Td>
+                  <Td cores={cores}>{usina.cidade}, {usina.estado}</Td>
+                  <Td cores={cores}>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
                       background: `${statusCor[usina.status]}22`, color: statusCor[usina.status],
@@ -266,9 +307,14 @@ const VisaoGeral: React.FC = () => {
                       {statusLabel[usina.status] ?? usina.status}
                     </span>
                   </Td>
-                  <Td>{usina.geracao_kw.toFixed(2)} kW</Td>
-                  <Td>{usina.consumo_kw.toFixed(2)} kW</Td>
-                  <Td>{usina.ultima_leitura ? new Date(usina.ultima_leitura).toLocaleString('pt-BR') : '—'}</Td>
+                  <Td cores={cores}>{usina.geracao_kw.toFixed(2)} kW</Td>
+                  <Td cores={cores}>{usina.consumo_kw.toFixed(2)} kW</Td>
+                  <Td cores={cores}>
+                    <span style={{ color: usina.saldo_hoje_kwh >= 0 ? cores.verde : cores.vermelho }}>
+                      {usina.saldo_hoje_kwh >= 0 ? '+' : ''}{usina.saldo_hoje_kwh.toFixed(2)} kWh
+                    </span>
+                  </Td>
+                  <Td cores={cores}>{usina.ultima_leitura ? new Date(usina.ultima_leitura).toLocaleString('pt-BR') : '—'}</Td>
                 </tr>
               ))}
             </tbody>
@@ -440,20 +486,20 @@ const VisaoGeral: React.FC = () => {
   );
 };
 
-const Card: React.FC<{ titulo: string; valor: string; sub: string; cor: string }> = ({ titulo, valor, sub, cor }) => (
-  <div style={{ background: '#181C27', border: `1px solid ${cor}55`, borderRadius: 12, padding: '1.25rem' }}>
-    <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, letterSpacing: 0.5 }}>{titulo}</div>
+const Card: React.FC<{ titulo: string; valor: string; sub: string; cor: string; cores: Cores }> = ({ titulo, valor, sub, cor, cores }) => (
+  <div style={{ background: cores.bg2, border: `1px solid ${cor}55`, borderRadius: 12, padding: '1.25rem' }}>
+    <div style={{ fontSize: 11, color: cores.text2, marginBottom: 8, letterSpacing: 0.5 }}>{titulo}</div>
     <div style={{ fontSize: 28, fontWeight: 700, color: cor }}>{valor}</div>
-    <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>{sub}</div>
+    <div style={{ fontSize: 12, color: cores.text3, marginTop: 4 }}>{sub}</div>
   </div>
 );
 
-const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, color: '#94A3B8', fontWeight: 600, letterSpacing: 0.5 }}>{children}</th>
+const Th: React.FC<{ children: React.ReactNode; cores: Cores }> = ({ children, cores }) => (
+  <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, color: cores.text2, fontWeight: 600, letterSpacing: 0.5 }}>{children}</th>
 );
 
-const Td: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <td style={{ padding: '12px', fontSize: 13, color: '#F8FAFC' }}>{children}</td>
+const Td: React.FC<{ children: React.ReactNode; cores: Cores }> = ({ children, cores }) => (
+  <td style={{ padding: '12px', fontSize: 13, color: cores.text }}>{children}</td>
 );
 
 export default VisaoGeral;
