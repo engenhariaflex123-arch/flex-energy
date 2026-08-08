@@ -15,6 +15,8 @@ interface Usina {
   geracao_hoje_kwh: number;
   consumo_hoje_kwh: number;
   saldo_hoje_kwh: number;
+  potencia_kwp: number;
+  kwh_por_kwp: number | null;
 }
 
 interface Resumo {
@@ -28,6 +30,8 @@ interface Resumo {
   total_geracao_hoje_kwh: number;
   total_consumo_hoje_kwh: number;
   total_saldo_hoje_kwh: number;
+  total_potencia_kwp: number;
+  total_kwh_por_kwp: number | null;
   usinas: Usina[];
 }
 
@@ -391,6 +395,7 @@ const VisaoGeral: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '1rem' }}>
         <Card cores={cores} titulo="TOTAL DE USINAS" valor={String(resumo.total_usinas)} sub={`${usinasOnline} ativas`} cor={cores.laranja} />
+        <Card cores={cores} titulo="POTÊNCIA INSTALADA" valor={`${resumo.total_potencia_kwp.toFixed(2)} kWp`} sub="Soma de todas as usinas cadastradas" cor={cores.laranja} />
         <Card cores={cores} titulo="GERAÇÃO ATUAL" valor={`${resumo.total_geracao_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor={cores.verde} />
         <Card cores={cores} titulo="CONSUMO ATUAL" valor={`${resumo.total_consumo_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor={cores.vermelho} />
         <Card
@@ -414,6 +419,13 @@ const VisaoGeral: React.FC = () => {
           valor={`${saldoHoje >= 0 ? '+' : ''}${saldoHoje.toFixed(2)} kWh`}
           sub={saldoHoje >= 0 ? 'Exportou mais do que consumiu' : 'Consumiu mais do que exportou'}
           cor={saldoHoje >= 0 ? cores.verde : cores.vermelho}
+        />
+        <Card
+          cores={cores}
+          titulo="PRODUTIVIDADE"
+          valor={resumo.total_kwh_por_kwp != null ? `${resumo.total_kwh_por_kwp.toFixed(2)} kWh/kWp` : '—'}
+          sub={resumo.total_kwh_por_kwp != null ? `Geração ÷ potência instalada — ${resumo.periodo_label}` : 'Nenhuma usina com potência (kWp) cadastrada'}
+          cor={cores.azul}
         />
       </div>
 
