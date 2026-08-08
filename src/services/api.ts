@@ -134,8 +134,14 @@ export const getDadosIrradiancia = async (clienteId: string, horas = 24, hoje = 
   const res = await api.get(`/irradiancia/${clienteId}?horas=${horas}&hoje=${hoje}`);
   return res.data;
 };
-export const getResumoGrupo = async (grupoId: number) => {
-  const res = await api.get(`/grupos/${grupoId}/resumo`);
+export type PeriodoResumoGrupo = 'hoje' | 'mes' | 'ano';
+
+export const getResumoGrupo = async (grupoId: number, periodo: PeriodoResumoGrupo = 'hoje', mes?: number, ano?: number) => {
+  const params = new URLSearchParams();
+  params.append('periodo', periodo);
+  if (mes) params.append('mes', String(mes));
+  if (ano) params.append('ano', String(ano));
+  const res = await api.get(`/grupos/${grupoId}/resumo?${params.toString()}`);
   return res.data;
 };
 export const getClienteAtivo = (): string => {
@@ -171,6 +177,31 @@ export const criarMinhaUsina = async (dados: CriarUsinaPayload) => {
   const res = await api.post('/minhas-usinas', dados);
   return res.data;
 };
+
+interface EditarUsinaPayload {
+  nome?: string;
+  cidade?: string;
+  estado?: string;
+  endereco?: string;
+  tipo_instalacao?: string;
+  potencia_kwp?: number;
+  tipo_medicao?: 'consumo_direto' | 'bidirecional';
+  telefone_whatsapp?: string;
+  foto_base64?: string;
+}
+
+export const atualizarMinhaUsina = async (clienteId: string, dados: EditarUsinaPayload) => {
+  const res = await api.patch(`/minhas-usinas/${clienteId}`, dados);
+  return res.data;
+};
+
+// Exclusão lógica — a usina some das listagens, mas o histórico de dados
+// permanece intacto no InfluxDB.
+export const excluirMinhaUsina = async (clienteId: string) => {
+  const res = await api.delete(`/minhas-usinas/${clienteId}`);
+  return res.data;
+};
+
 export const getMinhasUsinas = async () => {
   const res = await api.get('/minhas-usinas');
   return res.data;

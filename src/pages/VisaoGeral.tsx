@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getResumoGrupo, criarMinhaUsina } from '../services/api';
+import { getResumoGrupo, criarMinhaUsina, atualizarMinhaUsina, excluirMinhaUsina, getClienteInfo, PeriodoResumoGrupo } from '../services/api';
 import { useTheme, Cores } from '../contexts/ThemeContext';
 
 interface Usina {
@@ -23,6 +23,8 @@ interface Resumo {
   total_usinas: number;
   total_geracao_kw: number;
   total_consumo_kw: number;
+  periodo: PeriodoResumoGrupo;
+  periodo_label: string;
   total_geracao_hoje_kwh: number;
   total_consumo_hoje_kwh: number;
   total_saldo_hoje_kwh: number;
@@ -87,11 +89,34 @@ const VisaoGeral: React.FC = () => {
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState('');
 
+  // --- Filtro de período (Hoje / Mês / Ano) ---
+  const agora = new Date();
+  const [periodo, setPeriodo] = useState<PeriodoResumoGrupo>('hoje');
+  const [mesSelecionado, setMesSelecionado] = useState(agora.getMonth() + 1);
+  const [anoSelecionado, setAnoSelecionado] = useState(agora.getFullYear());
+
+  // --- Editar usina ---
+  const [usinaEditando, setUsinaEditando] = useState<Usina | null>(null);
+  const [edNome, setEdNome] = useState('');
+  const [edCidade, setEdCidade] = useState('');
+  const [edEstado, setEdEstado] = useState('');
+  const [edPotenciaKwp, setEdPotenciaKwp] = useState('');
+  const [edTipoMedicao, setEdTipoMedicao] = useState<'consumo_direto' | 'bidirecional'>('consumo_direto');
+  const [edTelefoneWhatsapp, setEdTelefoneWhatsapp] = useState('');
+  const [carregandoEdicao, setCarregandoEdicao] = useState(false);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [erroEdicao, setErroEdicao] = useState('');
+
+  // --- Excluir usina ---
+  const [usinaExcluindo, setUsinaExcluindo] = useState<Usina | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+  const [erroExclusao, setErroExclusao] = useState('');
+
   const grupoIdAtual = () => Number(localStorage.getItem('grupo_id'));
 
-  const carregar = async (grupoId: number) => {
+  const carregar = async (grupoId: number, periodoAtual = periodo, mesAtual = mesSelecionado, anoAtual = anoSelecionado) => {
     try {
-      const dados = await getResumoGrupo(grupoId);
+      const dados = await getResumoGrupo(grupoId, periodoAtual, mesAtual, anoAtual);
       setResumo(dados);
       setErro('');
     } catch (e) {
@@ -107,10 +132,15 @@ const VisaoGeral: React.FC = () => {
       navigate('/dashboard');
       return;
     }
-    carregar(Number(grupoId));
-    const interval = setInterval(() => carregar(Number(grupoId)), 30000);
+    setCarregando(true);
+    carregar(Number(grupoId), periodo, mesSelecionado, anoSelecionado);
+    // Só faz sentido reatualizar automaticamente a cada 30s quando o
+    // período é "hoje" (que muda em tempo real). Mês/ano selecionados
+    // não mudam sozinhos, então não precisa ficar batendo na API à toa.
+    if (periodo !== 'hoje') return;
+    const interval = setInterval(() => carregar(Number(grupoId), periodo, mesSelecionado, anoSelecionado), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [periodo, mesSelecionado, anoSelecionado]);
 
   const resetForm = () => {
     setNovoNome('');
@@ -194,6 +224,79 @@ const VisaoGeral: React.FC = () => {
     }
   };
 
+  // --- Editar usina ---
+  const abrirEdicao = async (usina: Usina) => {
+    setUsinaEditando(usina);
+    setErroEdicao('');
+    setCarregandoEdicao(true);
+    // Pré-preenche com o que já temos da linha da tabela...
+    setEdNome(usina.nome);
+    setEdCidade(usina.cidade);
+    setEdEstado(usina.estado);
+    setEdPotenciaKwp('');
+    setEdTipoMedicao('consumo_direto');
+    setEdTelefoneWhatsapp('');
+    try {
+      // ...e completa com os campos que só vêm no cadastro detalhado
+      // (o resumo do grupo não traz potência, tipo de medição, WhatsApp).
+      const info = await getClienteInfo(usina.cliente_id);
+      setEdNome(info.nome);
+      setEdCidade(info.cidade || '');
+      setEdEstado(info.estado || '');
+      setEdPotenciaKwp(info.potencia_kwp != null ? String(info.potencia_kwp) : '');
+      setEdTipoMedicao(info.tipo_medicao || 'consumo_direto');
+      setEdTelefoneWhatsapp(info.telefone_whatsapp || '');
+    } catch (e) {
+      setErroEdicao('Não foi possível carregar todos os dados da usina. Você ainda pode editar os campos abaixo.');
+    } finally {
+      setCarregandoEdicao(false);
+    }
+  };
+
+  const fecharEdicao = () => {
+    setUsinaEditando(null);
+    setErroEdicao('');
+  };
+
+  const handleSalvarEdicao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usinaEditando) return;
+    setErroEdicao('');
+    setSalvandoEdicao(true);
+    try {
+      await atualizarMinhaUsina(usinaEditando.cliente_id, {
+        nome: edNome,
+        cidade: edCidade || undefined,
+        estado: edEstado || undefined,
+        potencia_kwp: edPotenciaKwp ? Number(edPotenciaKwp) : undefined,
+        tipo_medicao: edTipoMedicao,
+        telefone_whatsapp: edTelefoneWhatsapp || undefined,
+      });
+      fecharEdicao();
+      await carregar(grupoIdAtual());
+    } catch (err) {
+      setErroEdicao('Erro ao salvar as alterações. Tente novamente.');
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  };
+
+  // --- Excluir usina ---
+  const handleConfirmarExclusao = async () => {
+    if (!usinaExcluindo) return;
+    setErroExclusao('');
+    setExcluindo(true);
+    try {
+      await excluirMinhaUsina(usinaExcluindo.cliente_id);
+      setUsinaExcluindo(null);
+      await carregar(grupoIdAtual());
+    } catch (err) {
+      setErroExclusao('Erro ao excluir a usina. Tente novamente.');
+    } finally {
+      setExcluindo(false);
+    }
+  };
+
   if (carregando) {
     return (
       <div style={{ minHeight: '100vh', background: cores.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cores.text2 }}>
@@ -245,6 +348,47 @@ const VisaoGeral: React.FC = () => {
         </div>
       </div>
 
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: '1.5rem' }}>
+        {(['hoje', 'mes', 'ano'] as PeriodoResumoGrupo[]).map((opcao) => (
+          <button
+            key={opcao}
+            onClick={() => setPeriodo(opcao)}
+            style={{
+              background: periodo === opcao ? cores.laranja : 'transparent',
+              color: periodo === opcao ? '#fff' : cores.text2,
+              border: `1px solid ${periodo === opcao ? cores.laranja : cores.border}`,
+              borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            {opcao === 'hoje' ? 'Hoje' : opcao === 'mes' ? 'Mês' : 'Ano'}
+          </button>
+        ))}
+
+        {periodo === 'mes' && (
+          <select
+            value={mesSelecionado}
+            onChange={(e) => setMesSelecionado(Number(e.target.value))}
+            style={{ background: cores.bg2, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+          >
+            {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map((nomeMes, idx) => (
+              <option key={idx} value={idx + 1}>{nomeMes}</option>
+            ))}
+          </select>
+        )}
+
+        {(periodo === 'mes' || periodo === 'ano') && (
+          <select
+            value={anoSelecionado}
+            onChange={(e) => setAnoSelecionado(Number(e.target.value))}
+            style={{ background: cores.bg2, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+          >
+            {Array.from({ length: 6 }, (_, i) => agora.getFullYear() - i).map((ano) => (
+              <option key={ano} value={ano}>{ano}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '1rem' }}>
         <Card cores={cores} titulo="TOTAL DE USINAS" valor={String(resumo.total_usinas)} sub={`${usinasOnline} ativas`} cor={cores.laranja} />
         <Card cores={cores} titulo="GERAÇÃO ATUAL" valor={`${resumo.total_geracao_kw.toFixed(2)} kW`} sub="Soma de todas as usinas" cor={cores.verde} />
@@ -259,14 +403,14 @@ const VisaoGeral: React.FC = () => {
       </div>
 
       <div style={{ fontSize: 11, color: cores.text3, letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' }}>
-        Acumulado de hoje
+        Acumulado — {resumo.periodo_label}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '2rem' }}>
-        <Card cores={cores} titulo="GERAÇÃO HOJE" valor={`${resumo.total_geracao_hoje_kwh.toFixed(2)} kWh`} sub="Acumulado do dia — todas as usinas" cor={cores.verde} />
-        <Card cores={cores} titulo="CONSUMO HOJE" valor={`${resumo.total_consumo_hoje_kwh.toFixed(2)} kWh`} sub="Acumulado do dia — todas as usinas" cor={cores.vermelho} />
+        <Card cores={cores} titulo="GERAÇÃO" valor={`${resumo.total_geracao_hoje_kwh.toFixed(2)} kWh`} sub={`Acumulado — ${resumo.periodo_label} — todas as usinas`} cor={cores.verde} />
+        <Card cores={cores} titulo="CONSUMO" valor={`${resumo.total_consumo_hoje_kwh.toFixed(2)} kWh`} sub={`Acumulado — ${resumo.periodo_label} — todas as usinas`} cor={cores.vermelho} />
         <Card
           cores={cores}
-          titulo="SALDO HOJE"
+          titulo="SALDO"
           valor={`${saldoHoje >= 0 ? '+' : ''}${saldoHoje.toFixed(2)} kWh`}
           sub={saldoHoje >= 0 ? 'Exportou mais do que consumiu' : 'Consumiu mais do que exportou'}
           cor={saldoHoje >= 0 ? cores.verde : cores.vermelho}
@@ -284,8 +428,9 @@ const VisaoGeral: React.FC = () => {
                 <Th cores={cores}>Status</Th>
                 <Th cores={cores}>Geração</Th>
                 <Th cores={cores}>Consumo</Th>
-                <Th cores={cores}>Saldo hoje</Th>
+                <Th cores={cores}>Saldo — {resumo.periodo_label}</Th>
                 <Th cores={cores}>Última leitura</Th>
+                <Th cores={cores}>Ações</Th>
               </tr>
             </thead>
             <tbody>
@@ -315,6 +460,24 @@ const VisaoGeral: React.FC = () => {
                     </span>
                   </Td>
                   <Td cores={cores}>{usina.ultima_leitura ? new Date(usina.ultima_leitura).toLocaleString('pt-BR') : '—'}</Td>
+                  <Td cores={cores}>
+                    <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => abrirEdicao(usina)}
+                        title="Editar usina"
+                        style={{ background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 6, padding: '5px 9px', fontSize: 12, cursor: 'pointer' }}
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => setUsinaExcluindo(usina)}
+                        title="Excluir usina"
+                        style={{ background: 'transparent', color: cores.vermelho, border: `1px solid ${cores.vermelho}55`, borderRadius: 6, padding: '5px 9px', fontSize: 12, cursor: 'pointer' }}
+                      >
+                        🗑️ Excluir
+                      </button>
+                    </div>
+                  </Td>
                 </tr>
               ))}
             </tbody>
@@ -479,6 +642,148 @@ const VisaoGeral: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {usinaEditando && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, overflowY: 'auto', padding: '2rem 1rem' }}
+          onClick={fecharEdicao}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 16, width: 440, maxWidth: '100%', padding: '1.5rem' }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: cores.text, marginBottom: '1.25rem' }}>
+              Editar Usina
+            </div>
+
+            {carregandoEdicao ? (
+              <div style={{ color: cores.text2, fontSize: 13, padding: '1rem 0' }}>Carregando dados da usina...</div>
+            ) : (
+              <form onSubmit={handleSalvarEdicao}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ ...labelStyle, color: cores.text2 }}>Nome da usina</label>
+                  <input
+                    value={edNome}
+                    onChange={(e) => setEdNome(e.target.value)}
+                    required
+                    style={{ ...inputStyle, background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}` }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ ...labelStyle, color: cores.text2 }}>Cidade</label>
+                    <input
+                      value={edCidade}
+                      onChange={(e) => setEdCidade(e.target.value)}
+                      style={{ ...inputStyle, background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}` }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, color: cores.text2 }}>Estado</label>
+                    <input
+                      value={edEstado}
+                      onChange={(e) => setEdEstado(e.target.value)}
+                      maxLength={2}
+                      style={{ ...inputStyle, background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}` }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ ...labelStyle, color: cores.text2 }}>Potência (kWp)</label>
+                  <input
+                    value={edPotenciaKwp}
+                    onChange={(e) => setEdPotenciaKwp(e.target.value)}
+                    type="number" step="0.01"
+                    style={{ ...inputStyle, background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}` }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ ...labelStyle, color: cores.text2 }}>Tipo de medição do consumo</label>
+                  <select
+                    value={edTipoMedicao}
+                    onChange={(e) => setEdTipoMedicao(e.target.value as 'consumo_direto' | 'bidirecional')}
+                    style={{ ...inputStyle, background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}` }}
+                  >
+                    <option value="consumo_direto">Medidor no ramal de cargas (consumo direto)</option>
+                    <option value="bidirecional">Medidor no padrão de entrada (bidirecional)</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ ...labelStyle, color: cores.text2 }}>WhatsApp para relatórios (com DDI+DDD)</label>
+                  <input
+                    value={edTelefoneWhatsapp}
+                    onChange={(e) => setEdTelefoneWhatsapp(e.target.value)}
+                    placeholder="Ex: 5537999998888"
+                    style={{ ...inputStyle, background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}` }}
+                  />
+                </div>
+
+                {erroEdicao && <div style={{ color: cores.vermelho, fontSize: 12, marginBottom: '1rem' }}>{erroEdicao}</div>}
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={fecharEdicao}
+                    style={{ flex: 1, background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={salvandoEdicao}
+                    style={{ flex: 1, background: cores.laranja, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    {salvandoEdicao ? 'Salvando...' : 'Salvar alterações'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {usinaExcluindo && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}
+          onClick={() => { if (!excluindo) { setUsinaExcluindo(null); setErroExclusao(''); } }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 16, width: 400, maxWidth: '100%', padding: '1.5rem' }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: cores.text, marginBottom: 10 }}>Excluir usina?</div>
+            <div style={{ fontSize: 13, color: cores.text2, marginBottom: '1.5rem' }}>
+              Tem certeza que deseja excluir <strong style={{ color: cores.text }}>{usinaExcluindo.nome}</strong>?
+              Ela deixará de aparecer nas listagens, mas o histórico de dados já registrado é preservado.
+            </div>
+
+            {erroExclusao && <div style={{ color: cores.vermelho, fontSize: 12, marginBottom: '1rem' }}>{erroExclusao}</div>}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                disabled={excluindo}
+                onClick={() => { setUsinaExcluindo(null); setErroExclusao(''); }}
+                style={{ flex: 1, background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={excluindo}
+                onClick={handleConfirmarExclusao}
+                style={{ flex: 1, background: cores.vermelho, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              >
+                {excluindo ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
           </div>
         </div>
       )}
