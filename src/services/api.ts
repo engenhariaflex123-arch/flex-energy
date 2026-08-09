@@ -233,3 +233,43 @@ export const getRelatorioMensalCompletoPDF = async (
   });
   return res.data;
 };
+
+// --- Página Análise: gráfico de linha configurável (inversor/medidor,
+// por dispositivo, campos escolhidos pelo usuário) ---
+export type TipoAnalise = 'inversor' | 'medidor';
+
+export const getDispositivosAnalise = async (clienteId: string, tipo: TipoAnalise): Promise<string[]> => {
+  const res = await api.get(`/analise/${clienteId}/dispositivos?tipo=${tipo}`);
+  return res.data.dispositivos;
+};
+
+export interface PontoSerieAnalise {
+  ts: string;
+  dispositivo_id: string;
+  [campo: string]: string | number;
+}
+
+export interface SerieAnaliseResponse {
+  cliente_id: string;
+  tipo: TipoAnalise;
+  dispositivo_id: string | null;
+  data: string;
+  campos: string[];
+  pontos: PontoSerieAnalise[];
+}
+
+export const getSerieAnalise = async (
+  clienteId: string,
+  tipo: TipoAnalise,
+  campos: string[],
+  dispositivoId?: string,
+  data?: string
+): Promise<SerieAnaliseResponse> => {
+  const params = new URLSearchParams();
+  params.append('tipo', tipo);
+  params.append('campos', campos.join(','));
+  if (dispositivoId) params.append('dispositivo_id', dispositivoId);
+  if (data) params.append('data', data);
+  const res = await api.get(`/analise/${clienteId}/serie?${params.toString()}`);
+  return res.data;
+};
