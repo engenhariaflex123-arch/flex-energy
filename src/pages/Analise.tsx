@@ -311,13 +311,14 @@ const Analise: React.FC = () => {
                   <Tooltip
                     contentStyle={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 12 }}
                     labelStyle={{ color: cores.text }}
-                    formatter={(valor: number, nomeCampo: string) => {
-                      const info = camposInfo[nomeCampo];
-                      return [`${valor} ${info?.unidade || ''}`, info?.label || nomeCampo];
+                    formatter={(valor: any, nomeCampo: any) => {
+                      const info = camposInfo[nomeCampo as string];
+                      const numero = typeof valor === 'number' ? valor : Array.isArray(valor) ? valor[0] : Number(valor);
+                      return [`${numero} ${info?.unidade || ''}`, info?.label || nomeCampo];
                     }}
                   />
                   <Legend
-                    formatter={(nomeCampo: string) => camposInfo[nomeCampo]?.label || nomeCampo}
+                    formatter={(nomeCampo: any) => camposInfo[nomeCampo as string]?.label || nomeCampo}
                     wrapperStyle={{ fontSize: 12, color: cores.text2 }}
                   />
                   {camposSelecionados.map((campo, idx) => (
