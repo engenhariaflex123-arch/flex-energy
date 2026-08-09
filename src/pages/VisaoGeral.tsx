@@ -581,7 +581,7 @@ const VisaoGeral: React.FC = () => {
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1rem', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>Inversores</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, color: '#F8FAFC' }}>Inversores</div>
                   <button type="button" onClick={addInversor} style={{ background: 'transparent', color: '#F97316', border: '1px solid #F97316', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
                     + Adicionar inversor
                   </button>
