@@ -325,7 +325,7 @@ const VisaoGeral: React.FC = () => {
     <div className="visaogeral-content" style={{ minHeight: '100vh', background: cores.bg, fontFamily: 'system-ui, sans-serif' }}>
       <div className="visaogeral-header">
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 32, fontWeight: 700, color: cores.laranja }}>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 44, fontWeight: 700, color: cores.laranja }}>
             {resumo.nome_grupo}
           </div>
           <div style={{ fontSize: 13, color: cores.text3 }}>Visão Geral das Usinas</div>
@@ -816,7 +816,7 @@ const Th: React.FC<{ children: React.ReactNode; cores: Cores }> = ({ children, c
 );
 
 const Td: React.FC<{ children: React.ReactNode; cores: Cores }> = ({ children, cores }) => (
-  <td style={{ padding: '12px', fontSize: 13, color: cores.text }}>{children}</td>
+  <td style={{ padding: '12px', fontSize: 15, color: cores.text }}>{children}</td>
 );
 
 export default VisaoGeral;
