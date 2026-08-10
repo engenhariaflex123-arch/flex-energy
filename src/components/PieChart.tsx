@@ -56,12 +56,12 @@ const PieChart: React.FC<PieChartProps> = ({ clienteAtivo, period }) => {
 
   return (
     <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: cores.text }}>{TITULOS[period]}</div>
-      <div style={{ fontSize: 11, color: cores.text3, marginBottom: '0.75rem' }}>Geração, consumo e saldo (kWh)</div>
+      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: cores.text }}>{TITULOS[period]}</div>
+      <div style={{ fontSize: 13, color: cores.text3, marginBottom: '0.75rem' }}>Geração, consumo e saldo (kWh)</div>
       {loading ? (
-        <div style={{ color: cores.text3, fontSize: 12, textAlign: 'center', padding: '2rem 0' }}>⟳ Carregando...</div>
+        <div style={{ color: cores.text3, fontSize: 14, textAlign: 'center', padding: '2rem 0' }}>⟳ Carregando...</div>
       ) : total === 0 ? (
-        <div style={{ color: cores.text3, fontSize: 12, textAlign: 'center', padding: '2rem 0' }}>Sem dados neste período ainda.</div>
+        <div style={{ color: cores.text3, fontSize: 14, textAlign: 'center', padding: '2rem 0' }}>Sem dados neste período ainda.</div>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <RePieChart>
@@ -69,10 +69,10 @@ const PieChart: React.FC<PieChartProps> = ({ clienteAtivo, period }) => {
               {dados.map((d) => <Cell key={d.name} fill={CORES[d.name]} />)}
             </Pie>
             <Tooltip
-              contentStyle={{ background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 12, color: cores.text }}
+              contentStyle={{ background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 14, color: cores.text }}
               formatter={(value: any) => [`${Number(value).toFixed(1)} kWh`, '']}
             />
-            <Legend wrapperStyle={{ fontSize: 11, color: cores.text2 }} />
+            <Legend wrapperStyle={{ fontSize: 13, color: cores.text2 }} />
           </RePieChart>
         </ResponsiveContainer>
       )}

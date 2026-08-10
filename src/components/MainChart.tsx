@@ -48,7 +48,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
     return () => window.removeEventListener('keydown', aoTeclar);
   }, [telaCheia]);
 
-  const tt = { contentStyle: { background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 12, color: cores.text } };
+  const tt = { contentStyle: { background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 14, color: cores.text } };
   const gridStroke = cores.border;
 
   const SERIES: SerieToggle[] = [
@@ -128,22 +128,22 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
     }}>
       <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: cores.text }}>{titulo}</div>
-          <div style={{ fontSize: 11, color: cores.text3, marginTop: 2 }}>{subtitulo}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: cores.text }}>{titulo}</div>
+          <div style={{ fontSize: 13, color: cores.text3, marginTop: 2 }}>{subtitulo}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {loading && <div style={{ fontSize: 11, color: cores.laranja }}>⟳ Carregando...</div>}
+          {loading && <div style={{ fontSize: 13, color: cores.laranja }}>⟳ Carregando...</div>}
           <button
             onClick={() => setTelaCheia(v => !v)}
             title={telaCheia ? 'Sair da tela cheia' : 'Expandir para tela cheia'}
-            style={{ background: 'transparent', border: `1px solid ${cores.border}`, borderRadius: 6, padding: '4px 8px', color: cores.text2, fontSize: 14, cursor: 'pointer' }}
+            style={{ background: 'transparent', border: `1px solid ${cores.border}`, borderRadius: 6, padding: '4px 8px', color: cores.text2, fontSize: 16, cursor: 'pointer' }}
           >
             {telaCheia ? '✕' : '⛶'}
           </button>
         </div>
       </div>
       {!loading && data.length === 0 ? (
-        <div style={{ color: cores.text3, fontSize: 12, textAlign: 'center', padding: '3rem 0' }}>Sem dados neste período ainda.</div>
+        <div style={{ color: cores.text3, fontSize: 14, textAlign: 'center', padding: '3rem 0' }}>Sem dados neste período ainda.</div>
       ) : (
         <>
           <ResponsiveContainer width="100%" height={telaCheia ? window.innerHeight - 260 : 420}>
@@ -160,10 +160,10 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} interval="preserveStartEnd" />
-                <YAxis yAxisId="kw" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
+                <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} interval="preserveStartEnd" />
+                <YAxis yAxisId="kw" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
                 {temIrradiancia && (
-                  <YAxis yAxisId="wm2" orientation="right" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'W/m²'} />
+                  <YAxis yAxisId="wm2" orientation="right" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'W/m²'} />
                 )}
                 <Tooltip {...tt} />
                 {visiveis['Geração'] && <Area yAxisId="kw" type="monotone" dataKey="Geração" stroke={cores.verde} strokeWidth={2} fill="url(#gG)" />}
@@ -175,8 +175,8 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
             ) : (
               <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} interval={period === 'mes' ? 2 : 0} />
-                <YAxis tick={{ fill: cores.text3, fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
+                <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} interval={period === 'mes' ? 2 : 0} />
+                <YAxis tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
                 <Tooltip {...tt} />
                 {visiveis['Geração'] && <Bar dataKey="Geração" fill={cores.verde} radius={[4, 4, 0, 0]} opacity={0.85} />}
                 {visiveis['Consumo'] && <Bar dataKey="Consumo" fill={cores.vermelho} radius={[4, 4, 0, 0]} opacity={0.65} />}
@@ -187,7 +187,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
           {/* Checkboxes para ocultar/mostrar cada série, logo abaixo da linha do tempo */}
           <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
             {SERIES.filter(s => s.key !== 'Irradiância' || temIrradiancia).map(s => (
-              <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: visiveis[s.key] ? cores.text : cores.text3, cursor: 'pointer', userSelect: 'none' }}>
+              <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: visiveis[s.key] ? cores.text : cores.text3, cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
                   checked={visiveis[s.key]}
@@ -204,27 +204,27 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
           {totais && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${cores.border}` }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 9, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                   {LABEL_TOTAL[period]} — Geração
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: cores.verde, fontFamily: "'Barlow Condensed',sans-serif" }}>
-                  {fmt(totais.geracao_kwh)} <span style={{ fontSize: 11, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                <div style={{ fontSize: 20, fontWeight: 700, color: cores.verde, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                  {fmt(totais.geracao_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 9, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                   {LABEL_TOTAL[period]} — Consumo
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
-                  {fmt(totais.consumo_kwh)} <span style={{ fontSize: 11, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                <div style={{ fontSize: 20, fontWeight: 700, color: cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                  {fmt(totais.consumo_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 9, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                   {LABEL_TOTAL[period]} — Saldo
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: totais.saldo_kwh >= 0 ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
-                  {totais.saldo_kwh >= 0 ? '+' : ''}{fmt(totais.saldo_kwh)} <span style={{ fontSize: 11, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                <div style={{ fontSize: 20, fontWeight: 700, color: totais.saldo_kwh >= 0 ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                  {totais.saldo_kwh >= 0 ? '+' : ''}{fmt(totais.saldo_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
                 </div>
               </div>
             </div>

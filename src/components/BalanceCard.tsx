@@ -34,10 +34,10 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
   if (loading) {
     return (
       <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
-        <div style={{ fontSize: 10, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+        <div style={{ fontSize: 12, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Saldo Energético — Hoje
         </div>
-        <div style={{ color: cores.text3, fontSize: 12 }}>⟳ Carregando...</div>
+        <div style={{ color: cores.text3, fontSize: 14 }}>⟳ Carregando...</div>
       </div>
     );
   }
@@ -45,10 +45,10 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
   if (!dados) {
     return (
       <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
-        <div style={{ fontSize: 10, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+        <div style={{ fontSize: 12, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Saldo Energético — Hoje
         </div>
-        <div style={{ color: cores.text3, fontSize: 12 }}>Sem dados disponíveis ainda hoje.</div>
+        <div style={{ color: cores.text3, fontSize: 14 }}>Sem dados disponíveis ainda hoje.</div>
       </div>
     );
   }
@@ -60,13 +60,13 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
 
   return (
     <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
-      <div style={{ fontSize: 10, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+      <div style={{ fontSize: 12, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Saldo Energético — Hoje
       </div>
-      <div style={{ fontSize: 32, fontWeight: 700, color: positivo ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1 }}>
-        {positivo ? '+' : ''}{fmt(saldo_kwh)} <span style={{ fontSize: 14, fontWeight: 400 }}>kWh</span>
+      <div style={{ fontSize: 34, fontWeight: 700, color: positivo ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1 }}>
+        {positivo ? '+' : ''}{fmt(saldo_kwh)} <span style={{ fontSize: 16, fontWeight: 400 }}>kWh</span>
       </div>
-      <div style={{ fontSize: 11, color: cores.text3, marginTop: 4, marginBottom: 12 }}>
+      <div style={{ fontSize: 13, color: cores.text3, marginTop: 4, marginBottom: 12 }}>
         {positivo ? '✅ Geração maior que consumo' : '⚠️ Consumo maior que geração'}
       </div>
       <div style={{ height: 6, background: cores.bg3, borderRadius: 3, overflow: 'hidden', marginBottom: 16 }}>
@@ -80,12 +80,12 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
           { val: fmt(energia_injetada_kwh), label: 'Energia injetada', c: cores.amarelo },
         ].map((s, i) => (
           <div key={i} style={{ background: cores.bg3, borderRadius: 8, padding: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: s.c }}>{s.val}</div>
-            <div style={{ fontSize: 10, color: cores.text3 }}>{s.label}</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: s.c }}>{s.val}</div>
+            <div style={{ fontSize: 12, color: cores.text3 }}>{s.label}</div>
           </div>
         ))}
       </div>
-      <div style={{ fontSize: 9, color: cores.text3, textAlign: 'right' }}>
+      <div style={{ fontSize: 11, color: cores.text3, textAlign: 'right' }}>
         Injeção/consumo {fonte_injecao === 'medido' ? 'medidos' : 'estimados'}
       </div>
     </div>

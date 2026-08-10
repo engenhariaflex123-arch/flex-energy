@@ -170,11 +170,11 @@ const Analise: React.FC = () => {
   const grupoStyle: React.CSSProperties = { marginBottom: 14 };
   const grupoHeaderStyle: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer',
-    fontSize: 12, fontWeight: 600, color: cores.text2, letterSpacing: 0.4, textTransform: 'uppercase',
+    fontSize: 16, fontWeight: 600, color: cores.text2, letterSpacing: 0.4, textTransform: 'uppercase',
     padding: '6px 0', borderBottom: `1px solid ${cores.border}`, marginBottom: 8,
   };
   const checkboxLabelStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: cores.text, padding: '3px 0', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: 6, fontSize: 17, color: cores.text, padding: '3px 0', cursor: 'pointer',
   };
 
   return (
@@ -182,10 +182,10 @@ const Analise: React.FC = () => {
       <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} />
       <div style={{ flex: 1, marginLeft: sidebarOpen ? 220 : 0, transition: 'margin 0.3s', minWidth: 0, background: cores.bg }}>
         <div style={{ background: cores.bg2, borderBottom: `1px solid ${cores.border}`, padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 50 }}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: `1px solid ${cores.border}`, borderRadius: 6, padding: '4px 8px', color: cores.text2, fontSize: 16, cursor: 'pointer' }}>☰</button>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: `1px solid ${cores.border}`, borderRadius: 6, padding: '4px 8px', color: cores.text2, fontSize: 20, cursor: 'pointer' }}>☰</button>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: cores.text }}>Análise Detalhada</div>
-            <div style={{ fontSize: 11, color: cores.text3, marginTop: 1 }}>Gráfico configurável por inversor/medidor, variável e dia</div>
+            <div style={{ fontSize: 19, fontWeight: 600, color: cores.text }}>Análise Detalhada</div>
+            <div style={{ fontSize: 15, color: cores.text3, marginTop: 1 }}>Gráfico configurável por inversor/medidor, variável e dia</div>
           </div>
         </div>
 
@@ -201,7 +201,7 @@ const Analise: React.FC = () => {
                     flex: 1, background: tipo === opcao ? cores.laranja : 'transparent',
                     color: tipo === opcao ? '#fff' : cores.text2,
                     border: `1px solid ${tipo === opcao ? cores.laranja : cores.border}`,
-                    borderRadius: 8, padding: '7px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    borderRadius: 8, padding: '7px 0', fontSize: 16, fontWeight: 600, cursor: 'pointer',
                   }}
                 >
                   {opcao === 'inversor' ? 'Inversor' : 'Medidor'}
@@ -210,36 +210,36 @@ const Analise: React.FC = () => {
             </div>
 
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 11, color: cores.text3, display: 'block', marginBottom: 4 }}>Dispositivo</label>
+              <label style={{ fontSize: 15, color: cores.text3, display: 'block', marginBottom: 4 }}>Dispositivo</label>
               <select
                 value={dispositivoSelecionado}
                 onChange={(e) => setDispositivoSelecionado(e.target.value)}
                 disabled={carregandoDispositivos}
-                style={{ width: '100%', background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }}
+                style={{ width: '100%', background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 17, boxSizing: 'border-box' }}
               >
                 {dispositivos.map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
               {dispositivos.length <= 1 && (
-                <div style={{ fontSize: 10.5, color: cores.text3, marginTop: 4 }}>
+                <div style={{ fontSize: 14.5, color: cores.text3, marginTop: 4 }}>
                   Só há um dispositivo "{dispositivos[0] || 'principal'}" registrado ainda para essa usina.
                 </div>
               )}
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, color: cores.text3, display: 'block', marginBottom: 4 }}>Dia</label>
+              <label style={{ fontSize: 15, color: cores.text3, display: 'block', marginBottom: 4 }}>Dia</label>
               <input
                 type="date"
                 value={data}
                 max={hojeISO()}
                 onChange={(e) => setData(e.target.value)}
-                style={{ width: '100%', background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }}
+                style={{ width: '100%', background: cores.bg3, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 17, boxSizing: 'border-box' }}
               />
             </div>
 
-            <div style={{ fontSize: 11, color: cores.text3, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            <div style={{ fontSize: 15, color: cores.text3, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               Variáveis
             </div>
             {gruposOrdem.map((grupo) => {
@@ -262,7 +262,7 @@ const Analise: React.FC = () => {
                             checked={camposSelecionados.includes(campo)}
                             onChange={() => toggleCampo(campo)}
                           />
-                          {info.label} <span style={{ color: cores.text3, fontSize: 11 }}>({info.unidade})</span>
+                          {info.label} <span style={{ color: cores.text3, fontSize: 15 }}>({info.unidade})</span>
                         </label>
                       ))}
                     </div>
@@ -275,41 +275,41 @@ const Analise: React.FC = () => {
           {/* --- Gráfico --- */}
           <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem', minHeight: 480 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: cores.text }}>
+              <div style={{ fontSize: 19, fontWeight: 600, color: cores.text }}>
                 {tipo === 'inversor' ? 'Inversor' : 'Medidor'} — {dispositivoSelecionado || '—'}
               </div>
-              <div style={{ fontSize: 12, color: cores.text3 }}>
+              <div style={{ fontSize: 16, color: cores.text3 }}>
                 {new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
               </div>
             </div>
 
             {temTensaoECorrente && (
-              <div style={{ fontSize: 11, color: cores.text3, background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 6, padding: '6px 10px', marginBottom: 10 }}>
+              <div style={{ fontSize: 15, color: cores.text3, background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 6, padding: '6px 10px', marginBottom: 10 }}>
                 Tensão (V) e corrente (A) dividem o mesmo eixo direito — as escalas são bem diferentes. Para comparar melhor, veja uma unidade de cada vez.
               </div>
             )}
 
-            {erro && <div style={{ color: cores.vermelho, fontSize: 13, marginBottom: 10 }}>{erro}</div>}
+            {erro && <div style={{ color: cores.vermelho, fontSize: 17, marginBottom: 10 }}>{erro}</div>}
 
             {camposSelecionados.length === 0 ? (
-              <div style={{ color: cores.text3, fontSize: 13, textAlign: 'center', padding: '4rem 0' }}>
+              <div style={{ color: cores.text3, fontSize: 17, textAlign: 'center', padding: '4rem 0' }}>
                 Selecione ao menos uma variável no painel à esquerda.
               </div>
             ) : carregandoSerie ? (
-              <div style={{ color: cores.text2, fontSize: 13, textAlign: 'center', padding: '4rem 0' }}>Carregando...</div>
+              <div style={{ color: cores.text2, fontSize: 17, textAlign: 'center', padding: '4rem 0' }}>Carregando...</div>
             ) : dadosGrafico.length === 0 ? (
-              <div style={{ color: cores.text3, fontSize: 13, textAlign: 'center', padding: '4rem 0' }}>
+              <div style={{ color: cores.text3, fontSize: 17, textAlign: 'center', padding: '4rem 0' }}>
                 Nenhum dado encontrado para esse dia/dispositivo.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={420}>
                 <LineChart data={dadosGrafico} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={cores.border} />
-                  <XAxis dataKey="horaLabel" stroke={cores.text3} fontSize={11} minTickGap={30} />
-                  <YAxis yAxisId="left" stroke={cores.text3} fontSize={11} />
-                  <YAxis yAxisId="right" orientation="right" stroke={cores.text3} fontSize={11} />
+                  <XAxis dataKey="horaLabel" stroke={cores.text3} fontSize={15} minTickGap={30} />
+                  <YAxis yAxisId="left" stroke={cores.text3} fontSize={15} />
+                  <YAxis yAxisId="right" orientation="right" stroke={cores.text3} fontSize={15} />
                   <Tooltip
-                    contentStyle={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 12 }}
+                    contentStyle={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 16 }}
                     labelStyle={{ color: cores.text }}
                     formatter={(valor: any, nomeCampo: any) => {
                       const info = camposInfo[nomeCampo as string];
@@ -319,7 +319,7 @@ const Analise: React.FC = () => {
                   />
                   <Legend
                     formatter={(nomeCampo: any) => camposInfo[nomeCampo as string]?.label || nomeCampo}
-                    wrapperStyle={{ fontSize: 12, color: cores.text2 }}
+                    wrapperStyle={{ fontSize: 16, color: cores.text2 }}
                   />
                   {camposSelecionados.map((campo, idx) => (
                     <Line

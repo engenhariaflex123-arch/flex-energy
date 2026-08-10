@@ -61,10 +61,10 @@ const statusLabel: Record<string, string> = {
 
 const inputStyle: React.CSSProperties = {
   width: '100%', background: '#1E2436', border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+  borderRadius: 8, padding: '10px 14px', color: '#F8FAFC', fontSize: 16, outline: 'none', boxSizing: 'border-box',
 };
 
-const labelStyle: React.CSSProperties = { fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 6 };
+const labelStyle: React.CSSProperties = { fontSize: 14, color: '#94A3B8', display: 'block', marginBottom: 6 };
 
 const novoInversorVazio = (): InversorForm => ({
   marca: '', modelo: '', potencia_kw: '', mppts: '2', strings: [{ kwp: '' }],
@@ -328,7 +328,7 @@ const VisaoGeral: React.FC = () => {
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 44, fontWeight: 700, color: cores.laranja }}>
             {resumo.nome_grupo}
           </div>
-          <div style={{ fontSize: 13, color: cores.text3 }}>Visão Geral das Usinas</div>
+          <div style={{ fontSize: 15, color: cores.text3 }}>Visão Geral das Usinas</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
@@ -337,7 +337,7 @@ const VisaoGeral: React.FC = () => {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`,
-              borderRadius: 8, padding: '10px 14px', fontSize: 13, cursor: 'pointer',
+              borderRadius: 8, padding: '10px 14px', fontSize: 15, cursor: 'pointer',
             }}
           >
             <span>{mode === 'dark' ? '☀️' : '🌙'}</span>
@@ -345,7 +345,7 @@ const VisaoGeral: React.FC = () => {
           </button>
           <button
             onClick={() => setModalAberto(true)}
-            style={{ background: cores.laranja, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            style={{ background: cores.laranja, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
           >
             + Nova Usina
           </button>
@@ -361,7 +361,7 @@ const VisaoGeral: React.FC = () => {
               background: periodo === opcao ? cores.laranja : 'transparent',
               color: periodo === opcao ? '#fff' : cores.text2,
               border: `1px solid ${periodo === opcao ? cores.laranja : cores.border}`,
-              borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              borderRadius: 8, padding: '8px 16px', fontSize: 15, fontWeight: 600, cursor: 'pointer',
             }}
           >
             {opcao === 'hoje' ? 'Hoje' : opcao === 'mes' ? 'Mês' : 'Ano'}
@@ -372,7 +372,7 @@ const VisaoGeral: React.FC = () => {
           <select
             value={mesSelecionado}
             onChange={(e) => setMesSelecionado(Number(e.target.value))}
-            style={{ background: cores.bg2, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+            style={{ background: cores.bg2, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 15 }}
           >
             {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map((nomeMes, idx) => (
               <option key={idx} value={idx + 1}>{nomeMes}</option>
@@ -384,7 +384,7 @@ const VisaoGeral: React.FC = () => {
           <select
             value={anoSelecionado}
             onChange={(e) => setAnoSelecionado(Number(e.target.value))}
-            style={{ background: cores.bg2, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+            style={{ background: cores.bg2, color: cores.text, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 15 }}
           >
             {Array.from({ length: 6 }, (_, i) => agora.getFullYear() - i).map((ano) => (
               <option key={ano} value={ano}>{ano}</option>
@@ -407,7 +407,7 @@ const VisaoGeral: React.FC = () => {
         />
       </div>
 
-      <div style={{ fontSize: 11, color: cores.text3, letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 13, color: cores.text3, letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' }}>
         Acumulado — {resumo.periodo_label}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: '2rem' }}>
@@ -430,7 +430,7 @@ const VisaoGeral: React.FC = () => {
       </div>
 
       <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 16, padding: '1.5rem' }}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: cores.text, marginBottom: '1rem' }}>Usinas</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: cores.text, marginBottom: '1rem' }}>Usinas</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -458,7 +458,7 @@ const VisaoGeral: React.FC = () => {
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
                       background: `${statusCor[usina.status]}22`, color: statusCor[usina.status],
-                      padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                      padding: '4px 10px', borderRadius: 999, fontSize: 14, fontWeight: 600,
                     }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusCor[usina.status] }} />
                       {statusLabel[usina.status] ?? usina.status}
@@ -477,14 +477,14 @@ const VisaoGeral: React.FC = () => {
                       <button
                         onClick={() => abrirEdicao(usina)}
                         title="Editar usina"
-                        style={{ background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 6, padding: '5px 9px', fontSize: 12, cursor: 'pointer' }}
+                        style={{ background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 6, padding: '5px 9px', fontSize: 14, cursor: 'pointer' }}
                       >
                         ✏️ Editar
                       </button>
                       <button
                         onClick={() => setUsinaExcluindo(usina)}
                         title="Excluir usina"
-                        style={{ background: 'transparent', color: cores.vermelho, border: `1px solid ${cores.vermelho}55`, borderRadius: 6, padding: '5px 9px', fontSize: 12, cursor: 'pointer' }}
+                        style={{ background: 'transparent', color: cores.vermelho, border: `1px solid ${cores.vermelho}55`, borderRadius: 6, padding: '5px 9px', fontSize: 14, cursor: 'pointer' }}
                       >
                         🗑️ Excluir
                       </button>
@@ -507,7 +507,7 @@ const VisaoGeral: React.FC = () => {
             className="usina-modal"
             style={{ background: '#181C27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, width: 480, maxWidth: '100%' }}
           >
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC', marginBottom: '1.5rem' }}>Nova Usina</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#F8FAFC', marginBottom: '1.5rem' }}>Nova Usina</div>
             <form onSubmit={handleCriarUsina}>
 
               <div style={{ marginBottom: '1rem' }}>
@@ -553,7 +553,7 @@ const VisaoGeral: React.FC = () => {
                   <option value="consumo_direto">Medidor no ramal de cargas (consumo direto)</option>
                   <option value="bidirecional">Medidor no padrão de entrada (bidirecional)</option>
                 </select>
-                <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
                   {novoTipoMedicao === 'consumo_direto'
                     ? 'O medidor mede o consumo total diretamente no ramal de cargas.'
                     : 'O medidor mede a energia importada/exportada no ponto de conexão com a rede.'}
@@ -568,7 +568,7 @@ const VisaoGeral: React.FC = () => {
                   placeholder="Ex: 5537999998888"
                   style={inputStyle}
                 />
-                <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
                   Número que receberá os relatórios diários e mensais automáticos.
                 </div>
               </div>
@@ -576,26 +576,26 @@ const VisaoGeral: React.FC = () => {
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={labelStyle}>Foto da usina</label>
                 <input type="file" accept="image/*" onChange={handleFotoChange} style={{ ...inputStyle, padding: '8px 14px' }} />
-                {fotoNomeArquivo && <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>Selecionado: {fotoNomeArquivo}</div>}
+                {fotoNomeArquivo && <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Selecionado: {fotoNomeArquivo}</div>}
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1rem', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 18, fontWeight: 600, color: '#F8FAFC' }}>Inversores</div>
-                  <button type="button" onClick={addInversor} style={{ background: 'transparent', color: '#F97316', border: '1px solid #F97316', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#F8FAFC' }}>Inversores</div>
+                  <button type="button" onClick={addInversor} style={{ background: 'transparent', color: '#F97316', border: '1px solid #F97316', borderRadius: 6, padding: '4px 10px', fontSize: 14, cursor: 'pointer' }}>
                     + Adicionar inversor
                   </button>
                 </div>
 
                 {inversores.length === 0 && (
-                  <div style={{ fontSize: 12, color: '#64748B', marginBottom: 8 }}>Nenhum inversor adicionado ainda.</div>
+                  <div style={{ fontSize: 14, color: '#64748B', marginBottom: 8 }}>Nenhum inversor adicionado ainda.</div>
                 )}
 
                 {inversores.map((inv, invIdx) => (
                   <div key={invIdx} style={{ background: '#1E2436', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '1rem', marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8' }}>Inversor {invIdx + 1}</div>
-                      <button type="button" onClick={() => removeInversor(invIdx)} style={{ background: 'transparent', color: '#F87171', border: 'none', fontSize: 12, cursor: 'pointer' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#94A3B8' }}>Inversor {invIdx + 1}</div>
+                      <button type="button" onClick={() => removeInversor(invIdx)} style={{ background: 'transparent', color: '#F87171', border: 'none', fontSize: 14, cursor: 'pointer' }}>
                         Remover
                       </button>
                     </div>
@@ -611,8 +611,8 @@ const VisaoGeral: React.FC = () => {
 
                     <div style={{ paddingLeft: 4 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <div style={{ fontSize: 11, color: '#64748B' }}>Strings</div>
-                        <button type="button" onClick={() => addString(invIdx)} style={{ background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }}>
+                        <div style={{ fontSize: 13, color: '#64748B' }}>Strings</div>
+                        <button type="button" onClick={() => addString(invIdx)} style={{ background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '2px 8px', fontSize: 13, cursor: 'pointer' }}>
                           + String
                         </button>
                       </div>
@@ -625,7 +625,7 @@ const VisaoGeral: React.FC = () => {
                             type="number" step="0.01"
                             style={{ ...inputStyle, flex: 1 }}
                           />
-                          <button type="button" onClick={() => removeString(invIdx, strIdx)} style={{ background: 'transparent', color: '#F87171', border: 'none', fontSize: 12, cursor: 'pointer' }}>
+                          <button type="button" onClick={() => removeString(invIdx, strIdx)} style={{ background: 'transparent', color: '#F87171', border: 'none', fontSize: 14, cursor: 'pointer' }}>
                             ✕
                           </button>
                         </div>
@@ -635,20 +635,20 @@ const VisaoGeral: React.FC = () => {
                 ))}
               </div>
 
-              {erroForm && <div style={{ color: '#F87171', fontSize: 12, marginBottom: '1rem' }}>{erroForm}</div>}
+              {erroForm && <div style={{ color: '#F87171', fontSize: 14, marginBottom: '1rem' }}>{erroForm}</div>}
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   type="button"
                   onClick={() => { setModalAberto(false); resetForm(); }}
-                  style={{ flex: 1, background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+                  style={{ flex: 1, background: 'transparent', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px', fontSize: 15, cursor: 'pointer' }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={salvando}
-                  style={{ flex: 1, background: '#F97316', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ flex: 1, background: '#F97316', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
                 >
                   {salvando ? 'Criando...' : 'Criar Usina'}
                 </button>
@@ -667,12 +667,12 @@ const VisaoGeral: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
             style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 16, width: 440, maxWidth: '100%', padding: '1.5rem' }}
           >
-            <div style={{ fontSize: 18, fontWeight: 700, color: cores.text, marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: cores.text, marginBottom: '1.25rem' }}>
               Editar Usina
             </div>
 
             {carregandoEdicao ? (
-              <div style={{ color: cores.text2, fontSize: 13, padding: '1rem 0' }}>Carregando dados da usina...</div>
+              <div style={{ color: cores.text2, fontSize: 15, padding: '1rem 0' }}>Carregando dados da usina...</div>
             ) : (
               <form onSubmit={handleSalvarEdicao}>
                 <div style={{ marginBottom: '1rem' }}>
@@ -737,20 +737,20 @@ const VisaoGeral: React.FC = () => {
                   />
                 </div>
 
-                {erroEdicao && <div style={{ color: cores.vermelho, fontSize: 12, marginBottom: '1rem' }}>{erroEdicao}</div>}
+                {erroEdicao && <div style={{ color: cores.vermelho, fontSize: 14, marginBottom: '1rem' }}>{erroEdicao}</div>}
 
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     type="button"
                     onClick={fecharEdicao}
-                    style={{ flex: 1, background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+                    style={{ flex: 1, background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '10px', fontSize: 15, cursor: 'pointer' }}
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={salvandoEdicao}
-                    style={{ flex: 1, background: cores.laranja, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                    style={{ flex: 1, background: cores.laranja, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
                   >
                     {salvandoEdicao ? 'Salvando...' : 'Salvar alterações'}
                   </button>
@@ -770,20 +770,20 @@ const VisaoGeral: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
             style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 16, width: 400, maxWidth: '100%', padding: '1.5rem' }}
           >
-            <div style={{ fontSize: 18, fontWeight: 700, color: cores.text, marginBottom: 10 }}>Excluir usina?</div>
-            <div style={{ fontSize: 13, color: cores.text2, marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: cores.text, marginBottom: 10 }}>Excluir usina?</div>
+            <div style={{ fontSize: 15, color: cores.text2, marginBottom: '1.5rem' }}>
               Tem certeza que deseja excluir <strong style={{ color: cores.text }}>{usinaExcluindo.nome}</strong>?
               Ela deixará de aparecer nas listagens, mas o histórico de dados já registrado é preservado.
             </div>
 
-            {erroExclusao && <div style={{ color: cores.vermelho, fontSize: 12, marginBottom: '1rem' }}>{erroExclusao}</div>}
+            {erroExclusao && <div style={{ color: cores.vermelho, fontSize: 14, marginBottom: '1rem' }}>{erroExclusao}</div>}
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="button"
                 disabled={excluindo}
                 onClick={() => { setUsinaExcluindo(null); setErroExclusao(''); }}
-                style={{ flex: 1, background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}
+                style={{ flex: 1, background: 'transparent', color: cores.text2, border: `1px solid ${cores.border}`, borderRadius: 8, padding: '10px', fontSize: 15, cursor: 'pointer' }}
               >
                 Cancelar
               </button>
@@ -791,7 +791,7 @@ const VisaoGeral: React.FC = () => {
                 type="button"
                 disabled={excluindo}
                 onClick={handleConfirmarExclusao}
-                style={{ flex: 1, background: cores.vermelho, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                style={{ flex: 1, background: cores.vermelho, color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
               >
                 {excluindo ? 'Excluindo...' : 'Excluir'}
               </button>
@@ -812,11 +812,11 @@ const Card: React.FC<{ titulo: string; valor: string; sub: string; cor: string; 
 );
 
 const Th: React.FC<{ children: React.ReactNode; cores: Cores }> = ({ children, cores }) => (
-  <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, color: cores.text2, fontWeight: 600, letterSpacing: 0.5 }}>{children}</th>
+  <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 13, color: cores.text2, fontWeight: 600, letterSpacing: 0.5 }}>{children}</th>
 );
 
 const Td: React.FC<{ children: React.ReactNode; cores: Cores }> = ({ children, cores }) => (
-  <td style={{ padding: '12px', fontSize: 15, color: cores.text }}>{children}</td>
+  <td style={{ padding: '12px', fontSize: 17, color: cores.text }}>{children}</td>
 );
 
 export default VisaoGeral;
