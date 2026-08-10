@@ -189,7 +189,7 @@ const Analise: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ padding: '1.25rem 1.5rem', display: 'grid', gridTemplateColumns: '260px 1fr', gap: 16, alignItems: 'start' }}>
+        <div style={{ padding: '1.25rem 1.5rem', display: 'grid', gridTemplateColumns: '260px 1fr', gap: 16, alignItems: 'stretch' }}>
           {/* --- Painel de filtros --- */}
           <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1rem' }}>
             <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
@@ -273,7 +273,7 @@ const Analise: React.FC = () => {
           </div>
 
           {/* --- Gráfico --- */}
-          <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem', minHeight: 480 }}>
+          <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: 19, fontWeight: 600, color: cores.text }}>
                 {tipo === 'inversor' ? 'Inversor' : 'Medidor'} — {dispositivoSelecionado || '—'}
@@ -291,52 +291,54 @@ const Analise: React.FC = () => {
 
             {erro && <div style={{ color: cores.vermelho, fontSize: 17, marginBottom: 10 }}>{erro}</div>}
 
-            {camposSelecionados.length === 0 ? (
-              <div style={{ color: cores.text3, fontSize: 17, textAlign: 'center', padding: '4rem 0' }}>
-                Selecione ao menos uma variável no painel à esquerda.
-              </div>
-            ) : carregandoSerie ? (
-              <div style={{ color: cores.text2, fontSize: 17, textAlign: 'center', padding: '4rem 0' }}>Carregando...</div>
-            ) : dadosGrafico.length === 0 ? (
-              <div style={{ color: cores.text3, fontSize: 17, textAlign: 'center', padding: '4rem 0' }}>
-                Nenhum dado encontrado para esse dia/dispositivo.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={420}>
-                <LineChart data={dadosGrafico} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={cores.border} />
-                  <XAxis dataKey="horaLabel" stroke={cores.text3} fontSize={15} minTickGap={30} />
-                  <YAxis yAxisId="left" stroke={cores.text3} fontSize={15} />
-                  <YAxis yAxisId="right" orientation="right" stroke={cores.text3} fontSize={15} />
-                  <Tooltip
-                    contentStyle={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 16 }}
-                    labelStyle={{ color: cores.text }}
-                    formatter={(valor: any, nomeCampo: any) => {
-                      const info = camposInfo[nomeCampo as string];
-                      const numero = typeof valor === 'number' ? valor : Array.isArray(valor) ? valor[0] : Number(valor);
-                      return [`${numero} ${info?.unidade || ''}`, info?.label || nomeCampo];
-                    }}
-                  />
-                  <Legend
-                    formatter={(nomeCampo: any) => camposInfo[nomeCampo as string]?.label || nomeCampo}
-                    wrapperStyle={{ fontSize: 16, color: cores.text2 }}
-                  />
-                  {camposSelecionados.map((campo, idx) => (
-                    <Line
-                      key={campo}
-                      yAxisId={eixoDoCampo(campo)}
-                      type="monotone"
-                      dataKey={campo}
-                      stroke={PALETA_LINHAS[idx % PALETA_LINHAS.length]}
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              {camposSelecionados.length === 0 ? (
+                <div style={{ color: cores.text3, fontSize: 17, textAlign: 'center', margin: 'auto' }}>
+                  Selecione ao menos uma variável no painel à esquerda.
+                </div>
+              ) : carregandoSerie ? (
+                <div style={{ color: cores.text2, fontSize: 17, textAlign: 'center', margin: 'auto' }}>Carregando...</div>
+              ) : dadosGrafico.length === 0 ? (
+                <div style={{ color: cores.text3, fontSize: 17, textAlign: 'center', margin: 'auto' }}>
+                  Nenhum dado encontrado para esse dia/dispositivo.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dadosGrafico} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={cores.border} />
+                    <XAxis dataKey="horaLabel" stroke={cores.text3} fontSize={15} minTickGap={30} />
+                    <YAxis yAxisId="left" stroke={cores.text3} fontSize={15} />
+                    <YAxis yAxisId="right" orientation="right" stroke={cores.text3} fontSize={15} />
+                    <Tooltip
+                      contentStyle={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 16 }}
+                      labelStyle={{ color: cores.text }}
+                      formatter={(valor: any, nomeCampo: any) => {
+                        const info = camposInfo[nomeCampo as string];
+                        const numero = typeof valor === 'number' ? valor : Array.isArray(valor) ? valor[0] : Number(valor);
+                        return [`${numero} ${info?.unidade || ''}`, info?.label || nomeCampo];
+                      }}
                     />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            )}
+                    <Legend
+                      formatter={(nomeCampo: any) => camposInfo[nomeCampo as string]?.label || nomeCampo}
+                      wrapperStyle={{ fontSize: 16, color: cores.text2 }}
+                    />
+                    {camposSelecionados.map((campo, idx) => (
+                      <Line
+                        key={campo}
+                        yAxisId={eixoDoCampo(campo)}
+                        type="monotone"
+                        dataKey={campo}
+                        stroke={PALETA_LINHAS[idx % PALETA_LINHAS.length]}
+                        strokeWidth={2}
+                        dot={false}
+                        connectNulls
+                        isAnimationActive={false}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         </div>
       </div>
