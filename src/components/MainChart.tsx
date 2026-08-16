@@ -27,7 +27,7 @@ const LABEL_TOTAL: Record<MainChartProps['period'], string> = {
 };
 
 interface SerieToggle {
-  key: 'Geração' | 'Consumo' | 'Irradiância';
+  key: 'Geração' | 'Consumo' | 'Irradiância' | 'Energia Injetada' | 'Balanço';
   cor: string;
 }
 
@@ -37,7 +37,9 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
   const [data, setData] = useState<any[]>([]);
   const [totais, setTotais] = useState<Totais | null>(null);
   const [loading, setLoading] = useState(true);
-  const [visiveis, setVisiveis] = useState<Record<string, boolean>>({ 'Geração': true, 'Consumo': true, 'Irradiância': true });
+  const [visiveis, setVisiveis] = useState<Record<string, boolean>>({
+    'Geração': true, 'Consumo': true, 'Irradiância': true, 'Energia Injetada': false, 'Balanço': false,
+  });
   const [telaCheia, setTelaCheia] = useState(false);
   const { cores } = useTheme();
 
@@ -55,6 +57,8 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
     { key: 'Geração', cor: cores.verde },
     { key: 'Consumo', cor: cores.vermelho },
     { key: 'Irradiância', cor: cores.azul },
+    { key: 'Energia Injetada', cor: cores.laranja },
+    { key: 'Balanço', cor: cores.roxo },
   ];
 
   useEffect(() => {
@@ -75,6 +79,11 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
         'Geração': Number(d.geracao_kw),
         'Consumo': Number(d.consumo_kw),
         'Irradiância': irradPorTimestamp[d.timestamp] ?? null,
+        // Injetada/Balanço só existem pra clientes bidirecionais (medidor
+        // no padrão de entrada) — em consumo_direto ficam null, e o
+        // gráfico simplesmente não desenha essas duas linhas.
+        'Energia Injetada': d.exportada_kw != null ? Number(d.exportada_kw) : null,
+        'Balanço': d.balanco_kw != null ? Number(d.balanco_kw) : null,
       }));
       return { pontos, totais: null as Totais | null };
     };
@@ -168,6 +177,12 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
                 <Tooltip {...tt} />
                 {visiveis['Geração'] && <Area yAxisId="kw" type="monotone" dataKey="Geração" stroke={cores.verde} strokeWidth={2} fill="url(#gG)" />}
                 {visiveis['Consumo'] && <Area yAxisId="kw" type="monotone" dataKey="Consumo" stroke={cores.vermelho} strokeWidth={2} fill="url(#gC)" />}
+                {visiveis['Energia Injetada'] && (
+                  <Line yAxisId="kw" type="monotone" dataKey="Energia Injetada" stroke={cores.laranja} strokeWidth={2} dot={false} connectNulls />
+                )}
+                {visiveis['Balanço'] && (
+                  <Line yAxisId="kw" type="monotone" dataKey="Balanço" stroke={cores.roxo} strokeWidth={2} dot={false} connectNulls />
+                )}
                 {temIrradiancia && visiveis['Irradiância'] && (
                   <Line yAxisId="wm2" type="monotone" dataKey="Irradiância" stroke={cores.azul} strokeWidth={2} dot={false} connectNulls />
                 )}
@@ -186,7 +201,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
 
           {/* Checkboxes para ocultar/mostrar cada série, logo abaixo da linha do tempo */}
           <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-            {SERIES.filter(s => s.key !== 'Irradiância' || temIrradiancia).map(s => (
+            {SERIES.filter(s => (s.key !== 'Irradiância' || temIrradiancia) && (period === 'dia' || (s.key !== 'Energia Injetada' && s.key !== 'Balanço'))).map(s => (
               <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: visiveis[s.key] ? cores.text : cores.text3, cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"

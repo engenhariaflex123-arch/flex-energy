@@ -438,8 +438,8 @@ const VisaoGeral: React.FC = () => {
                 <Th cores={cores}>Usina</Th>
                 <Th cores={cores}>Localização</Th>
                 <Th cores={cores}>Status</Th>
-                <Th cores={cores}>Geração</Th>
-                <Th cores={cores}>Consumo</Th>
+                <Th cores={cores}>Geração — {resumo.periodo_label}</Th>
+                <Th cores={cores}>Consumo — {resumo.periodo_label}</Th>
                 <Th cores={cores}>Saldo — {resumo.periodo_label}</Th>
                 <Th cores={cores}>Última leitura</Th>
                 <Th cores={cores}>Ações</Th>
@@ -464,8 +464,8 @@ const VisaoGeral: React.FC = () => {
                       {statusLabel[usina.status] ?? usina.status}
                     </span>
                   </Td>
-                  <Td cores={cores}>{usina.geracao_kw.toFixed(2)} kW</Td>
-                  <Td cores={cores}>{usina.consumo_kw.toFixed(2)} kW</Td>
+                  <Td cores={cores}>{usina.geracao_hoje_kwh.toFixed(2)} kWh</Td>
+                  <Td cores={cores}>{usina.consumo_hoje_kwh.toFixed(2)} kWh</Td>
                   <Td cores={cores}>
                     <span style={{ color: usina.saldo_hoje_kwh >= 0 ? cores.verde : cores.vermelho }}>
                       {usina.saldo_hoje_kwh >= 0 ? '+' : ''}{usina.saldo_hoje_kwh.toFixed(2)} kWh
