@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { getMinhasUsinas, getRelatorioDiarioPDF, getRelatorioMensalCompletoPDF } from '../services/api';
 import { verificarAtualizacao } from '../services/liveUpdate';
 import { useTheme } from '../contexts/ThemeContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 
-interface Props { open: boolean; clienteAtivo?: string; }
-const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
+interface Props { open: boolean; clienteAtivo?: string; onClose?: () => void; }
+const Sidebar: React.FC<Props> = ({ open, clienteAtivo, onClose }) => {
   const [consumoOpen, setConsumoOpen] = useState(false);
   const [geracaoOpen, setGeracaoOpen] = useState(false);
   const [usinaAtual, setUsinaAtual] = useState<{ nome: string; cidade?: string; estado?: string } | null>(null);
@@ -14,6 +15,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   const location = useLocation();
   const grupoId = localStorage.getItem('grupo_id');
   const { mode, cores, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const buscar = async () => {
@@ -34,6 +36,7 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
   const irPara = (rota: string) => {
     const params = new URLSearchParams(location.search);
     navigate(`${rota}?${params.toString()}`);
+    if (isMobile && onClose) onClose();
   };
 
   const baixarRelatorioPDF = async () => {
@@ -98,7 +101,14 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
     </div>
   );
   return (
-    <div className="app-sidebar" style={{ position:'fixed', left:0, top:0, bottom:0, width:220, background:cores.bg2, borderRight:`1px solid ${cores.border}`, display:'flex', flexDirection:'column', zIndex:100, overflowY:'auto' }}>
+    <>
+      {isMobile && (
+        <div
+          onClick={onClose}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 99 }}
+        />
+      )}
+      <div className="app-sidebar" style={{ position:'fixed', left:0, top:0, bottom:0, width:220, background:cores.bg2, borderRight:`1px solid ${cores.border}`, display:'flex', flexDirection:'column', zIndex:100, overflowY:'auto', boxShadow: isMobile ? '4px 0 24px rgba(0,0,0,0.35)' : 'none' }}>
       <div style={{ padding:'1.25rem', borderBottom:`1px solid ${cores.border}` }}>
         <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:28, fontWeight:700, color:cores.laranja, lineHeight:1 }}>FLEX</div>
         <div style={{ fontSize:15, color:cores.text, fontWeight:300, letterSpacing:'0.1em' }}>Assistance</div>
@@ -170,7 +180,8 @@ const Sidebar: React.FC<Props> = ({ open, clienteAtivo }) => {
           <span>Sair</span>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 export default Sidebar;

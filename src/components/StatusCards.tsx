@@ -78,7 +78,7 @@ const StatusCards: React.FC<StatusCardsProps> = ({ clienteAtivo }) => {
   ];
 
   return (
-    <div className="grid-cards-6">
+    <div className="grid-cards-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: '1.25rem' }}>
       {cards.map((c, i) => (
         <div key={i} style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 10, padding: '0.85rem', borderTop: `3px solid ${colors[c.color]}` }}>
           <div style={{ fontSize: 22, marginBottom: 6 }}>{c.icon}</div>

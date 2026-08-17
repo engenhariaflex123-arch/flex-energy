@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Sidebar from '../components/Sidebar';
 import { useTheme } from '../contexts/ThemeContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 import {
   getDispositivosAnalise,
   getSerieAnalise,
@@ -81,7 +82,8 @@ const hojeISO = () => {
 };
 
 const Analise: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const [searchParams] = useSearchParams();
   const { cores } = useTheme();
   const clienteAtivo = searchParams.get('cliente') || localStorage.getItem('cliente_id') || 'default';
@@ -179,17 +181,17 @@ const Analise: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} />
-      <div style={{ flex: 1, marginLeft: sidebarOpen ? 220 : 0, transition: 'margin 0.3s', minWidth: 0, background: cores.bg }}>
-        <div style={{ background: cores.bg2, borderBottom: `1px solid ${cores.border}`, padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 50 }}>
+      <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} onClose={() => setSidebarOpen(false)} />
+      <div style={{ flex: 1, marginLeft: (sidebarOpen && !isMobile) ? 220 : 0, transition: 'margin 0.3s', minWidth: 0, background: cores.bg }}>
+        <div style={{ background: cores.bg2, borderBottom: `1px solid ${cores.border}`, padding: isMobile ? '0.75rem 1rem' : '0.875rem 1.5rem', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 50 }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: `1px solid ${cores.border}`, borderRadius: 6, padding: '4px 8px', color: cores.text2, fontSize: 20, cursor: 'pointer' }}>☰</button>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 600, color: cores.text }}>Análise Detalhada</div>
-            <div style={{ fontSize: 15, color: cores.text3, marginTop: 1 }}>Gráfico configurável por inversor/medidor, variável e dia</div>
+            <div style={{ fontSize: isMobile ? 16 : 19, fontWeight: 600, color: cores.text }}>Análise Detalhada</div>
+            {!isMobile && <div style={{ fontSize: 15, color: cores.text3, marginTop: 1 }}>Gráfico configurável por inversor/medidor, variável e dia</div>}
           </div>
         </div>
 
-        <div style={{ padding: '1.25rem 1.5rem', display: 'grid', gridTemplateColumns: '260px 1fr', gap: 16, alignItems: 'stretch' }}>
+        <div style={{ padding: isMobile ? '1rem' : '1.25rem 1.5rem', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: 16, alignItems: isMobile ? 'start' : 'stretch' }}>
           {/* --- Painel de filtros --- */}
           <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1rem' }}>
             <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
@@ -273,7 +275,7 @@ const Analise: React.FC = () => {
           </div>
 
           {/* --- Gráfico --- */}
-          <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', height: isMobile ? undefined : '100%', minHeight: isMobile ? 420 : undefined }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: 19, fontWeight: 600, color: cores.text }}>
                 {tipo === 'inversor' ? 'Inversor' : 'Medidor'} — {dispositivoSelecionado || '—'}

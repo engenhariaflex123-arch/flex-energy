@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getResumoGrupo, criarMinhaUsina, atualizarMinhaUsina, excluirMinhaUsina, getClienteInfo, PeriodoResumoGrupo } from '../services/api';
 import { useTheme, Cores } from '../contexts/ThemeContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface Usina {
   cliente_id: string;
@@ -73,6 +74,7 @@ const novoInversorVazio = (): InversorForm => ({
 const VisaoGeral: React.FC = () => {
   const { mode, cores, toggleTheme } = useTheme();
   const statusCor = getStatusCor(cores);
+  const isMobile = useIsMobile();
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -322,15 +324,15 @@ const VisaoGeral: React.FC = () => {
   const usinasOnline = resumo.usinas.filter((u) => u.status !== 'offline').length;
 
   return (
-    <div className="visaogeral-content" style={{ minHeight: '100vh', background: cores.bg, fontFamily: 'system-ui, sans-serif' }}>
-      <div className="visaogeral-header">
+    <div className="visaogeral-content" style={{ minHeight: '100vh', background: cores.bg, fontFamily: 'system-ui, sans-serif', padding: isMobile ? '1rem' : '1.5rem' }}>
+      <div className="visaogeral-header" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: isMobile ? 16 : 24 }}>
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 44, fontWeight: 700, color: cores.laranja }}>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: isMobile ? 30 : 44, fontWeight: 700, color: cores.laranja }}>
             {resumo.nome_grupo}
           </div>
           <div style={{ fontSize: 15, color: cores.text3 }}>Visão Geral das Usinas</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <button
             onClick={toggleTheme}
             title={mode === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
@@ -341,7 +343,7 @@ const VisaoGeral: React.FC = () => {
             }}
           >
             <span>{mode === 'dark' ? '☀️' : '🌙'}</span>
-            <span>{mode === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>
+            {!isMobile && <span>{mode === 'dark' ? 'Modo claro' : 'Modo escuro'}</span>}
           </button>
           <button
             onClick={() => setModalAberto(true)}

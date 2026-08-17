@@ -8,10 +8,15 @@ import MainChart from '../components/MainChart';
 import BalanceCard from '../components/BalanceCard';
 import ClimateCard from '../components/ClimateCard';
 import PieChart from '../components/PieChart';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<'dia'|'mes'|'ano'>('dia');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  // No celular a sidebar começa fechada (é um menu que desliza por cima,
+  // não um painel fixo que empurra o conteúdo) — no desktop continua
+  // aberta por padrão, como sempre foi.
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -26,13 +31,13 @@ const Dashboard: React.FC = () => {
 
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
-      <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} />
-      <div style={{ flex:1, marginLeft: sidebarOpen ? 220 : 0, transition:'margin 0.3s', minWidth:0 }}>
+      <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} onClose={() => setSidebarOpen(false)} />
+      <div style={{ flex:1, marginLeft: (sidebarOpen && !isMobile) ? 220 : 0, transition:'margin 0.3s', minWidth:0 }}>
         <Topbar period={period} setPeriod={setPeriod} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div key={clienteAtivo} className="dashboard-content" style={{ padding:'1.25rem 1.5rem' }}>
+        <div key={clienteAtivo} className="dashboard-content" style={{ padding: isMobile ? '1rem' : '1.25rem 1.5rem' }}>
           <StatusCards clienteAtivo={clienteAtivo} />
           <OperacaoCards clienteAtivo={clienteAtivo} />
-          <div className="dashboard-main-grid" style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:12, marginBottom:12 }}>
+          <div className="dashboard-main-grid" style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap:12, marginBottom:12 }}>
             <MainChart clienteAtivo={clienteAtivo} period={period} />
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <BalanceCard clienteAtivo={clienteAtivo} />
