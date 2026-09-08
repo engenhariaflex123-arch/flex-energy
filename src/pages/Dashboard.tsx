@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import FluxoEletrons from '../components/FluxoEletrons';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import StatusCards from '../components/StatusCards';
@@ -9,7 +10,6 @@ import BalanceCard from '../components/BalanceCard';
 import ClimateCard from '../components/ClimateCard';
 import PieChart from '../components/PieChart';
 import { useIsMobile } from '../hooks/useIsMobile';
-
 const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<'dia'|'mes'|'ano'>('dia');
   const isMobile = useIsMobile();
@@ -18,7 +18,6 @@ const Dashboard: React.FC = () => {
   // aberta por padrão, como sempre foi.
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const [searchParams] = useSearchParams();
-
   useEffect(() => {
     const clienteParam = searchParams.get('cliente');
     if (clienteParam) {
@@ -28,7 +27,6 @@ const Dashboard: React.FC = () => {
     }
   }, [searchParams]);
   const clienteAtivo = searchParams.get('cliente') || localStorage.getItem('cliente_id') || 'default';
-
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
       <Sidebar open={sidebarOpen} clienteAtivo={clienteAtivo} onClose={() => setSidebarOpen(false)} />
@@ -45,6 +43,7 @@ const Dashboard: React.FC = () => {
               <ClimateCard />
             </div>
           </div>
+          <FluxoEletrons clienteAtivo={clienteAtivo} />
         </div>
       </div>
     </div>
