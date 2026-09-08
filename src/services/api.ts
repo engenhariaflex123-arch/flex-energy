@@ -28,8 +28,12 @@ api.interceptors.response.use(
   }
 );
 
-export const getDadosCliente = async (clienteId: string, horas = 24, hoje = false) => {
-  const res = await api.get(`/dados/${clienteId}?horas=${horas}&hoje=${hoje}`);
+export const getDadosCliente = async (clienteId: string, horas = 24, hoje = false, data?: string) => {
+  const params = new URLSearchParams();
+  params.append('horas', String(horas));
+  params.append('hoje', String(hoje));
+  if (data) params.append('data', data);
+  const res = await api.get(`/dados/${clienteId}?${params.toString()}`);
   return res.data;
 };
 
@@ -79,8 +83,13 @@ export interface HistoricoResponse {
   };
 }
 
-export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico, hoje = false): Promise<HistoricoResponse> => {
-  const res = await api.get(`/historico/${clienteId}?periodo=${periodo}&hoje=${hoje}`);
+export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico, hoje = false, mes?: number, ano?: number): Promise<HistoricoResponse> => {
+  const params = new URLSearchParams();
+  params.append('periodo', periodo);
+  params.append('hoje', String(hoje));
+  if (mes) params.append('mes', String(mes));
+  if (ano) params.append('ano', String(ano));
+  const res = await api.get(`/historico/${clienteId}?${params.toString()}`);
   return res.data;
 };
 
@@ -94,6 +103,28 @@ export interface IrradiacaoResponse {
 
 export const getIrradiacao = async (clienteId: string, periodo: PeriodoHistorico, hoje = false): Promise<IrradiacaoResponse> => {
   const res = await api.get(`/irradiacao/${clienteId}?periodo=${periodo}&hoje=${hoje}`);
+  return res.data;
+};
+
+// Leitura mais recente por fase (A/B/C), já decomposta em autoconsumo/rede/
+// injeção — base do diagrama animado de fluxo de elétrons do Dashboard.
+export interface FluxoFase {
+  geracao_kw: number;
+  consumo_kw: number;
+  autoconsumo_kw: number;
+  rede_kw: number;
+  injecao_kw: number;
+}
+
+export interface FluxoFasesResponse {
+  cliente_id: string;
+  tipo_medicao: 'consumo_direto' | 'bidirecional';
+  timestamp: string | null;
+  fases: { A: FluxoFase; B: FluxoFase; C: FluxoFase };
+}
+
+export const getFluxoFases = async (clienteId: string): Promise<FluxoFasesResponse> => {
+  const res = await api.get(`/fluxo-fases/${clienteId}`);
   return res.data;
 };
 
