@@ -6,6 +6,11 @@ import { useTheme } from '../contexts/ThemeContext';
 interface MainChartProps {
   clienteAtivo: string;
   period: 'dia' | 'mes' | 'ano';
+  // Avisa o componente pai (Dashboard) qual dia está selecionado aqui —
+  // usado pra sincronizar o card "Saldo Energético" e a rosquinha
+  // "Balanço" com a mesma data, em vez de ficarem sempre travados em hoje.
+  // Opcional: quem não passar continua funcionando exatamente como antes.
+  onDataSelecionadaChange?: (data: string) => void;
 }
 
 interface Totais {
@@ -48,7 +53,7 @@ const formatarMinutos = (min: number) => {
 // eixo representar o dia inteiro, não só o intervalo com dado.
 const TICKS_DIA = Array.from({ length: 13 }, (_, i) => i * 120);
 
-const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
+const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelecionadaChange }) => {
   const [data, setData] = useState<any[]>([]);
   const [totais, setTotais] = useState<Totais | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +91,15 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period }) => {
     window.addEventListener('keydown', aoTeclar);
     return () => window.removeEventListener('keydown', aoTeclar);
   }, [telaCheia]);
+
+  // Avisa o Dashboard qual dia está selecionado aqui, pra ele repassar pro
+  // card "Saldo Energético" e pra rosquinha "Balanço" — sem isso, os dois
+  // ficavam sempre travados em "hoje" mesmo quando esse gráfico já estava
+  // mostrando outro dia (o filtro de data abaixo é só interno do gráfico,
+  // os componentes vizinhos não tinham como saber que ele mudou).
+  useEffect(() => {
+    onDataSelecionadaChange?.(dataSelecionada);
+  }, [dataSelecionada, onDataSelecionadaChange]);
 
   const tt = { contentStyle: { background: cores.bg3, border: `1px solid ${cores.border}`, borderRadius: 8, fontSize: 14, color: cores.text } };
   const gridStroke = cores.border;
