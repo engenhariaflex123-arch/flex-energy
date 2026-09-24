@@ -44,6 +44,7 @@ export const getBalanco = async (clienteId: string, horas = 24) => {
 
 export interface BalancoHoje {
   cliente_id: string;
+  data: string;
   geracao_kwh: number;
   consumo_kwh: number;
   consumo_instantaneo_kwh: number;
@@ -53,11 +54,20 @@ export interface BalancoHoje {
   tipo_medicao: string;
 }
 
-// Card "Saldo Energético — Hoje": usa as fórmulas reais (energia injetada
-// e consumida, medidas de verdade quando o cliente tem medidor bidirecional
-// no padrão de entrada), não uma média simples de 24h.
-export const getBalancoHoje = async (clienteId: string): Promise<BalancoHoje> => {
-  const res = await api.get(`/balanco-hoje/${clienteId}`);
+// Card "Saldo Energético — Hoje" e rosquinha "Balanço": usa as fórmulas
+// reais (energia injetada e consumida, medidas de verdade quando o cliente
+// tem medidor bidirecional no padrão de entrada), não uma média simples
+// de 24h.
+// data opcional (YYYY-MM-DD, fuso de Brasília): sem ela, continua trazendo
+// hoje (comportamento de sempre) — com ela, traz o saldo daquele dia
+// específico, usado quando o usuário troca a data no filtro do gráfico
+// principal, pra esses dois cards acompanharem junto em vez de ficarem
+// travados em hoje.
+export const getBalancoHoje = async (clienteId: string, data?: string): Promise<BalancoHoje> => {
+  const params = new URLSearchParams();
+  if (data) params.append('data', data);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const res = await api.get(`/balanco-hoje/${clienteId}${query}`);
   return res.data;
 };
 
