@@ -12,6 +12,12 @@ import PieChart from '../components/PieChart';
 import { useIsMobile } from '../hooks/useIsMobile';
 const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<'dia'|'mes'|'ano'>('dia');
+  // Dia (YYYY-MM-DD) que o gráfico principal (MainChart) está mostrando —
+  // repassado pra ele avisar aqui via onDataSelecionadaChange, e daqui pro
+  // card "Saldo Energético" e pra rosquinha "Balanço", pra eles acompanharem
+  // junto em vez de ficarem sempre travados em hoje quando o usuário troca
+  // a data no filtro do gráfico.
+  const [diaSelecionado, setDiaSelecionado] = useState<string | undefined>(undefined);
   const isMobile = useIsMobile();
   // No celular a sidebar começa fechada (é um menu que desliza por cima,
   // não um painel fixo que empurra o conteúdo) — no desktop continua
@@ -36,10 +42,10 @@ const Dashboard: React.FC = () => {
           <StatusCards clienteAtivo={clienteAtivo} />
           <OperacaoCards clienteAtivo={clienteAtivo} />
           <div className="dashboard-main-grid" style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap:12, marginBottom:12 }}>
-            <MainChart clienteAtivo={clienteAtivo} period={period} />
+            <MainChart clienteAtivo={clienteAtivo} period={period} onDataSelecionadaChange={setDiaSelecionado} />
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <BalanceCard clienteAtivo={clienteAtivo} />
-              <PieChart clienteAtivo={clienteAtivo} period={period} />
+              <BalanceCard clienteAtivo={clienteAtivo} data={period === 'dia' ? diaSelecionado : undefined} />
+              <PieChart clienteAtivo={clienteAtivo} period={period} data={period === 'dia' ? diaSelecionado : undefined} />
               <ClimateCard />
             </div>
           </div>
