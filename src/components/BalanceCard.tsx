@@ -4,22 +4,38 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface BalanceCardProps {
   clienteAtivo: string;
+  // Dia (YYYY-MM-DD, fuso de Brasília) a mostrar aqui — repassado pelo
+  // Dashboard a partir do dia selecionado no filtro do gráfico principal
+  // (MainChart). Sem essa prop, continua mostrando hoje, como sempre.
+  data?: string;
 }
 
 const fmt = (n: number) => n.toFixed(2).replace('.', ',');
 
-const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
+// Data de hoje no fuso de Brasília, no formato YYYY-MM-DD — mesmo formato
+// usado pelo seletor de dia do MainChart, pra comparar se `data` é hoje.
+const hojeBR = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+// "2026-09-23" -> "23/09" — pra exibir no título quando não é hoje.
+const formatarDataTitulo = (isoData: string) => {
+  const [, mes, dia] = isoData.split('-');
+  return `${dia}/${mes}`;
+};
+
+const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo, data }) => {
   const [dados, setDados] = useState<BalancoHoje | null>(null);
   const [loading, setLoading] = useState(true);
   const { cores } = useTheme();
+  const ehHoje = !data || data === hojeBR();
+  const titulo = ehHoje ? 'Saldo Energético — Hoje' : `Saldo Energético — ${formatarDataTitulo(data as string)}`;
 
   useEffect(() => {
     const buscar = async () => {
       try {
-        const res = await getBalancoHoje(clienteAtivo);
+        const res = await getBalancoHoje(clienteAtivo, data);
         setDados(res);
       } catch (err) {
-        console.log('Erro ao buscar saldo energético de hoje:', err);
+        console.log('Erro ao buscar saldo energético:', err);
         setDados(null);
       } finally {
         setLoading(false);
@@ -27,15 +43,18 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
     };
     setLoading(true);
     buscar();
-    const interval = setInterval(buscar, 30000);
-    return () => clearInterval(interval);
-  }, [clienteAtivo]);
+    // Só fica atualizando sozinho quando é hoje — um dia já encerrado no
+    // passado não muda mais, então não precisa (nem faz sentido) recarregar
+    // a cada 30s.
+    const interval = ehHoje ? setInterval(buscar, 30000) : undefined;
+    return () => { if (interval) clearInterval(interval); };
+  }, [clienteAtivo, data, ehHoje]);
 
   if (loading) {
     return (
       <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
         <div style={{ fontSize: 12, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-          Saldo Energético — Hoje
+          {titulo}
         </div>
         <div style={{ color: cores.text3, fontSize: 14 }}>⟳ Carregando...</div>
       </div>
@@ -46,9 +65,11 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
     return (
       <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
         <div style={{ fontSize: 12, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-          Saldo Energético — Hoje
+          {titulo}
         </div>
-        <div style={{ color: cores.text3, fontSize: 14 }}>Sem dados disponíveis ainda hoje.</div>
+        <div style={{ color: cores.text3, fontSize: 14 }}>
+          {ehHoje ? 'Sem dados disponíveis ainda hoje.' : 'Sem dados disponíveis para esse dia.'}
+        </div>
       </div>
     );
   }
@@ -61,7 +82,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ clienteAtivo }) => {
   return (
     <div style={{ background: cores.bg2, border: `1px solid ${cores.border}`, borderRadius: 12, padding: '1.25rem' }}>
       <div style={{ fontSize: 12, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-        Saldo Energético — Hoje
+        {titulo}
       </div>
       <div style={{ fontSize: 34, fontWeight: 700, color: positivo ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1 }}>
         {positivo ? '+' : ''}{fmt(saldo_kwh)} <span style={{ fontSize: 16, fontWeight: 400 }}>kWh</span>
