@@ -80,16 +80,25 @@ export interface PontoHistorico {
   geracao_kwh: number;
   consumo_kwh: number;
   saldo_kwh: number;
+  // Só vêm preenchidos pra clientes com medidor bidirecional (padrão de
+  // entrada) — energia realmente MEDIDA saindo (injetada, positiva) e
+  // entrando (importada da rede, já negativa) nesse ponto. Ausentes
+  // (undefined) pra consumo_direto, que não tem como medir isso.
+  exportada_kwh?: number;
+  importada_kwh?: number;
 }
 
 export interface HistoricoResponse {
   cliente_id: string;
   periodo: PeriodoHistorico;
+  tipo_medicao?: 'consumo_direto' | 'bidirecional';
   pontos: PontoHistorico[];
   totais: {
     geracao_kwh: number;
     consumo_kwh: number;
     saldo_kwh: number;
+    exportada_kwh?: number;
+    importada_kwh?: number;
   };
 }
 
