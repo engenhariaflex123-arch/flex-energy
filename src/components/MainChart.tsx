@@ -17,6 +17,11 @@ interface Totais {
   geracao_kwh: number;
   consumo_kwh: number;
   saldo_kwh: number;
+  // Só vêm preenchidos pra clientes com medidor bidirecional — energia
+  // MEDIDA saindo (injetada, positiva) e entrando (importada, negativa) no
+  // padrão de entrada, somada no período (mês/ano) inteiro.
+  exportada_kwh?: number;
+  importada_kwh?: number;
 }
 
 const LABEL_TOTAL: Record<MainChartProps['period'], string> = {
@@ -33,7 +38,7 @@ const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 const hojeBR = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
 interface SerieToggle {
-  key: 'Geração' | 'Consumo' | 'Injetado' | 'Consumo Instantâneo' | 'Balanço';
+  key: 'Geração' | 'Consumo' | 'Injetado' | 'Consumo Instantâneo' | 'Balanço' | 'Energia Injetada' | 'Energia Importada';
   cor: string;
 }
 
@@ -61,6 +66,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
   // fase (Fase A/B/C, Injetado por fase) fica só na aba Análise.
   const [visiveis, setVisiveis] = useState<Record<string, boolean>>({
     'Geração': true, 'Consumo': true, 'Injetado': true, 'Consumo Instantâneo': true, 'Balanço': true,
+    'Energia Injetada': true, 'Energia Importada': true,
   });
   const [telaCheia, setTelaCheia] = useState(false);
   // Domínio (em minutos) do eixo X quando o usuário deu zoom arrastando a
@@ -110,6 +116,11 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
     { key: 'Injetado', cor: cores.azul },
     { key: 'Consumo Instantâneo', cor: cores.roxo },
     { key: 'Balanço', cor: cores.amarelo }, // swatch renderizado como gradiente amarelo/laranja, ver abaixo
+    // Só aparecem em Mês/Ano, e só pra cliente bidirecional (ver filtro do
+    // checkbox mais abaixo) — energia realmente MEDIDA no padrão de
+    // entrada: Injetada = saiu (positiva), Importada = entrou (negativa).
+    { key: 'Energia Injetada', cor: cores.azul },
+    { key: 'Energia Importada', cor: cores.laranja },
   ];
 
   useEffect(() => {
@@ -182,6 +193,11 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
         hora: p.label,
         'Geração': p.geracao_kwh,
         'Consumo': p.consumo_kwh,
+        // Ausentes (undefined) pra cliente consumo_direto — o backend só
+        // manda esses dois campos pra quem tem medidor bidirecional, e
+        // aqui eles já vêm com o sinal certo (importada já negativa).
+        'Energia Injetada': p.exportada_kwh,
+        'Energia Importada': p.importada_kwh,
       }));
       return { pontos, totais: res.totais as Totais };
     };
@@ -405,13 +421,25 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                 <Tooltip {...tt} />
                 {visiveis['Geração'] && <Bar dataKey="Geração" fill={cores.verde} radius={[4, 4, 0, 0]} opacity={0.85} />}
                 {visiveis['Consumo'] && <Bar dataKey="Consumo" fill={cores.vermelho} radius={[4, 4, 0, 0]} opacity={0.65} />}
+                {visiveis['Energia Injetada'] && <Bar dataKey="Energia Injetada" fill={cores.azul} radius={[4, 4, 0, 0]} opacity={0.85} />}
+                {visiveis['Energia Importada'] && <Bar dataKey="Energia Importada" fill={cores.laranja} radius={[0, 0, 4, 4]} opacity={0.85} />}
               </BarChart>
             )}
           </ResponsiveContainer>
 
-          {/* Checkboxes para ocultar/mostrar cada série, logo abaixo da linha do tempo */}
+          {/* Checkboxes para ocultar/mostrar cada série, logo abaixo da linha do tempo.
+              "Energia Injetada/Importada" só aparecem em Mês/Ano e só quando o
+              backend realmente mandou esses valores (cliente bidirecional) —
+              pra consumo_direto, que não tem como medir isso, o checkbox nem
+              aparece, em vez de aparecer vazio/sem efeito. */}
           <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-            {SERIES.filter(s => period === 'dia' || ['Geração', 'Consumo'].includes(s.key)).map(s => (
+            {SERIES.filter(s => {
+              if (period === 'dia') return !['Energia Injetada', 'Energia Importada'].includes(s.key);
+              if (['Energia Injetada', 'Energia Importada'].includes(s.key)) {
+                return data.some((d: any) => d['Energia Injetada'] != null || d['Energia Importada'] != null);
+              }
+              return ['Geração', 'Consumo'].includes(s.key);
+            }).map(s => (
               <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: visiveis[s.key] ? cores.text : cores.text3, cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
@@ -429,35 +457,60 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
             ))}
           </div>
 
-          {/* Card com o total do período — só aparece em Mês/Ano, não em Dia */}
-          {totais && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${cores.border}` }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                  {LABEL_TOTAL[period]} — Geração
+          {/* Card com o total do período — só aparece em Mês/Ano, não em Dia.
+              As duas últimas colunas (Injetada/Importada) só aparecem pra
+              cliente bidirecional, quando o backend manda esses totais. */}
+          {totais && (() => {
+            const temMedido = totais.exportada_kwh != null && totais.importada_kwh != null;
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: temMedido ? '1fr 1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 8, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${cores.border}` }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                    {LABEL_TOTAL[period]} — Geração
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: cores.verde, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                    {fmt(totais.geracao_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                  </div>
                 </div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: cores.verde, fontFamily: "'Barlow Condensed',sans-serif" }}>
-                  {fmt(totais.geracao_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                    {LABEL_TOTAL[period]} — Consumo
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                    {fmt(totais.consumo_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                  </div>
                 </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                    {LABEL_TOTAL[period]} — Saldo
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: totais.saldo_kwh >= 0 ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                    {totais.saldo_kwh >= 0 ? '+' : ''}{fmt(totais.saldo_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                  </div>
+                </div>
+                {temMedido && (
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                      {LABEL_TOTAL[period]} — Injetada
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: cores.azul, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                      +{fmt(totais.exportada_kwh as number)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                    </div>
+                  </div>
+                )}
+                {temMedido && (
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                      {LABEL_TOTAL[period]} — Importada
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: cores.laranja, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                      {fmt(totais.importada_kwh as number)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                  {LABEL_TOTAL[period]} — Consumo
-                </div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
-                  {fmt(totais.consumo_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
-                </div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: cores.text3, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                  {LABEL_TOTAL[period]} — Saldo
-                </div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: totais.saldo_kwh >= 0 ? cores.verde : cores.vermelho, fontFamily: "'Barlow Condensed',sans-serif" }}>
-                  {totais.saldo_kwh >= 0 ? '+' : ''}{fmt(totais.saldo_kwh)} <span style={{ fontSize: 13, fontWeight: 400, color: cores.text2 }}>kWh</span>
-                </div>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </>
       )}
     </div>
