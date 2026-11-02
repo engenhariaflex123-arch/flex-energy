@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Brush } from 'recharts';
-import { getDadosCliente, getHistorico } from '../services/api';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Brush } from 'recharts';
+import { getDadosCliente, getHistorico, getDadosIrradiancia, getIrradiacao } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface MainChartProps {
@@ -38,11 +38,20 @@ const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 const hojeBR = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
 interface SerieToggle {
-  key: 'Geração' | 'Consumo' | 'Injetado' | 'Consumo Instantâneo' | 'Balanço' | 'Energia Injetada' | 'Energia Importada';
+  key: 'Geração' | 'Consumo' | 'Injetado' | 'Consumo Instantâneo' | 'Balanço' | 'Energia Injetada' | 'Energia Importada' | 'Irradiância';
   cor: string;
 }
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+
+// Irradiância tem unidade própria (W/m² no Dia, kWh/m² em Mês/Ano), por isso
+// fica num segundo eixo Y, à direita — na mesma escala do kW ela achataria
+// (ou seria achatada por) as curvas de potência.
+const COR_IRRADIANCIA = '#06B6D4'; // ciano: não confunde com o amarelo/laranja do Balanço
+
+// Chave do minuto (timestamp arredondado pro minuto) — usada pra casar cada
+// ponto de energia com a leitura de irradiância do mesmo minuto.
+const chaveMinuto = (iso: string) => Math.floor(new Date(iso).getTime() / 60000);
 
 // Minutos desde meia-noite -> "HH:MM", pra rotular o eixo X (que usa
 // minutos como valor numérico, não mais a hora como texto — ver
@@ -66,7 +75,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
   // fase (Fase A/B/C, Injetado por fase) fica só na aba Análise.
   const [visiveis, setVisiveis] = useState<Record<string, boolean>>({
     'Geração': true, 'Consumo': true, 'Injetado': true, 'Consumo Instantâneo': true, 'Balanço': true,
-    'Energia Injetada': true, 'Energia Importada': true,
+    'Energia Injetada': true, 'Energia Importada': true, 'Irradiância': true,
   });
   const [telaCheia, setTelaCheia] = useState(false);
   // Domínio (em minutos) do eixo X quando o usuário deu zoom arrastando a
@@ -121,11 +130,30 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
     // entrada: Injetada = saiu (positiva), Importada = entrou (negativa).
     { key: 'Energia Injetada', cor: cores.azul },
     { key: 'Energia Importada', cor: cores.laranja },
+    { key: 'Irradiância', cor: COR_IRRADIANCIA },
   ];
 
   useEffect(() => {
     const buscarDia = async () => {
-      const resDados = await getDadosCliente(clienteAtivo, 24, ehHoje, ehHoje ? undefined : dataSelecionada);
+      // Energia e irradiância em paralelo, as duas já reduzidas a 1 ponto
+      // por minuto no backend (janela=1m) — antes vinha o dado bruto do
+      // dia inteiro (milhares de pontos), pesado de baixar e de desenhar.
+      // Se a irradiância falhar, o gráfico continua só sem essa curva.
+      const dataParam = ehHoje ? undefined : dataSelecionada;
+      const [resDados, resIrrad] = await Promise.all([
+        getDadosCliente(clienteAtivo, 24, ehHoje, dataParam, '1m'),
+        getDadosIrradiancia(clienteAtivo, 24, ehHoje, dataParam, '1m').catch(() => null),
+      ]);
+
+      // minuto -> irradiância (W/m²). Se vier mais de uma leitura no mesmo
+      // minuto, fica a maior (dispositivos sem sensor gravam 0).
+      const irradPorMinuto = new Map<number, number>();
+      for (const r of (resIrrad?.dados || [])) {
+        const v = r.irradiancia_wm2;
+        if (v == null || !r._time) continue;
+        const k = chaveMinuto(r._time);
+        irradPorMinuto.set(k, Math.max(irradPorMinuto.get(k) ?? 0, Number(v)));
+      }
 
       const dadosAsc = (resDados?.dados || []).slice().reverse();
       const pontos = dadosAsc.map((d: any) => {
@@ -175,6 +203,9 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
           // já que Consumo(importado) + Consumo Instantâneo = consumo_kw.
           'Balanço (+)': d.balanco_kw != null && d.balanco_kw >= 0 ? Number(d.balanco_kw) : null,
           'Balanço (-)': d.balanco_kw != null && d.balanco_kw < 0 ? Number(d.balanco_kw) : null,
+          // Eixo Y da direita (W/m²). null quando não houve leitura nesse
+          // minuto — connectNulls liga os pontos vizinhos.
+          'Irradiância': irradPorMinuto.get(chaveMinuto(d.timestamp)) ?? null,
         };
       });
       return { pontos, totais: null as Totais | null };
@@ -186,9 +217,18 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
       // mês/ano pedido, sem passar do presente, então cobre tanto "mês
       // atual" quanto "mês anterior" com a mesma chamada. Isso substitui o
       // antigo hoje=true (janela calendário só do período corrente).
-      const res = periodo === 'mes'
-        ? await getHistorico(clienteAtivo, periodo, false, mesSelecionado, anoSelecionado)
-        : await getHistorico(clienteAtivo, periodo, false, undefined, anoSelecionado);
+      const mesParam = periodo === 'mes' ? mesSelecionado : undefined;
+      const [res, resIrrad] = await Promise.all([
+        getHistorico(clienteAtivo, periodo, false, mesParam, anoSelecionado),
+        // Irradiação (kWh/m²) do mesmo mês/ano, um valor por dia/mês. Se
+        // falhar, o gráfico continua sem essa linha.
+        getIrradiacao(clienteAtivo, periodo, false, mesParam, anoSelecionado).catch(() => null),
+      ]);
+      // Os dois endpoints usam o mesmo rótulo ("dd/mm" no mês, "Jan".."Dez"
+      // no ano), então casam direto pelo label.
+      const irradPorLabel = new Map<string, number>(
+        (resIrrad?.pontos || []).map(p => [p.label, p.irradiacao_kwh_m2] as [string, number])
+      );
       const pontos = res.pontos.map(p => ({
         hora: p.label,
         'Geração': p.geracao_kwh,
@@ -198,6 +238,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
         // aqui eles já vêm com o sinal certo (importada já negativa).
         'Energia Injetada': p.exportada_kwh,
         'Energia Importada': p.importada_kwh,
+        'Irradiância': irradPorLabel.get(p.label) ?? null,
       }));
       return { pontos, totais: res.totais as Totais };
     };
@@ -236,6 +277,20 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
   const unidade = period === 'dia' ? 'kW' : 'kWh';
 
   const toggle = (key: string) => setVisiveis(v => ({ ...v, [key]: !v[key] }));
+
+  // Tooltip com a unidade certa de cada série (antes mostrava só o número).
+  const formatarTooltip = (valor: any, nome: any): [string, string] => {
+    let n = Number(valor);
+    if (valor == null || Number.isNaN(n)) return ['—', String(nome)];
+    if (Math.abs(n) < 0.005) n = 0; // evita "-0,00"
+    if (nome === 'Irradiância') {
+      return period === 'dia'
+        ? [`${Math.round(n)} W/m²`, 'Irradiância']
+        : [`${n.toFixed(2).replace('.', ',')} kWh/m²`, 'Irradiação'];
+    }
+    const casas = period === 'dia' ? 2 : 1;
+    return [`${n.toFixed(casas).replace('.', ',')} ${unidade}`, String(nome)];
+  };
 
   return (
     <div style={telaCheia ? {
@@ -370,7 +425,10 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                   allowDataOverflow
                 />
                 <YAxis yAxisId="kw" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
-                <Tooltip {...tt} labelFormatter={(label) => formatarMinutos(Number(label))} />
+                {visiveis['Irradiância'] && (
+                  <YAxis yAxisId="irr" orientation="right" domain={[0, 'auto']} tick={{ fill: COR_IRRADIANCIA, fontSize: 12 }} tickLine={false} axisLine={false} width={44} label={{ value: 'W/m²', angle: 90, position: 'insideRight', fill: COR_IRRADIANCIA, fontSize: 11 }} />
+                )}
+                <Tooltip {...tt} labelFormatter={(label) => formatarMinutos(Number(label))} formatter={formatarTooltip} />
                 {visiveis['Geração'] && <Area yAxisId="kw" type="monotone" dataKey="Geração" stroke={cores.verde} strokeWidth={2} fill="url(#gG)" connectNulls />}
                 {visiveis['Consumo'] && <Area yAxisId="kw" type="monotone" dataKey="Consumo" stroke={cores.vermelho} strokeWidth={2} fill="url(#gC)" connectNulls />}
                 {visiveis['Injetado'] && (
@@ -384,6 +442,9 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                     <Line yAxisId="kw" type="monotone" dataKey="Balanço (+)" stroke={cores.amarelo} strokeWidth={2} dot={false} connectNulls />
                     <Line yAxisId="kw" type="monotone" dataKey="Balanço (-)" stroke={cores.laranja} strokeWidth={2} dot={false} connectNulls />
                   </>
+                )}
+                {visiveis['Irradiância'] && (
+                  <Line yAxisId="irr" type="monotone" dataKey="Irradiância" stroke={COR_IRRADIANCIA} strokeWidth={1.5} strokeDasharray="5 3" dot={false} connectNulls isAnimationActive={false} />
                 )}
                 {/* Faixa de zoom: arrasta as alças pra focar num trecho do dia;
                     solta de volta nas pontas pra ver o dia inteiro de novo. */}
@@ -414,16 +475,22 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                 />
               </ComposedChart>
             ) : (
-              <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} interval={period === 'mes' ? 2 : 0} />
-                <YAxis tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
-                <Tooltip {...tt} />
-                {visiveis['Geração'] && <Bar dataKey="Geração" fill={cores.verde} radius={[4, 4, 0, 0]} opacity={0.85} />}
-                {visiveis['Consumo'] && <Bar dataKey="Consumo" fill={cores.vermelho} radius={[4, 4, 0, 0]} opacity={0.65} />}
-                {visiveis['Energia Injetada'] && <Bar dataKey="Energia Injetada" fill={cores.azul} radius={[4, 4, 0, 0]} opacity={0.85} />}
-                {visiveis['Energia Importada'] && <Bar dataKey="Energia Importada" fill={cores.laranja} radius={[0, 0, 4, 4]} opacity={0.85} />}
-              </BarChart>
+                <YAxis yAxisId="kwh" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
+                {visiveis['Irradiância'] && (
+                  <YAxis yAxisId="irr" orientation="right" domain={[0, 'auto']} tick={{ fill: COR_IRRADIANCIA, fontSize: 12 }} tickLine={false} axisLine={false} width={44} label={{ value: 'kWh/m²', angle: 90, position: 'insideRight', fill: COR_IRRADIANCIA, fontSize: 11 }} />
+                )}
+                <Tooltip {...tt} formatter={formatarTooltip} />
+                {visiveis['Geração'] && <Bar yAxisId="kwh" dataKey="Geração" fill={cores.verde} radius={[4, 4, 0, 0]} opacity={0.85} />}
+                {visiveis['Consumo'] && <Bar yAxisId="kwh" dataKey="Consumo" fill={cores.vermelho} radius={[4, 4, 0, 0]} opacity={0.65} />}
+                {visiveis['Energia Injetada'] && <Bar yAxisId="kwh" dataKey="Energia Injetada" fill={cores.azul} radius={[4, 4, 0, 0]} opacity={0.85} />}
+                {visiveis['Energia Importada'] && <Bar yAxisId="kwh" dataKey="Energia Importada" fill={cores.laranja} radius={[0, 0, 4, 4]} opacity={0.85} />}
+                {visiveis['Irradiância'] && (
+                  <Line yAxisId="irr" type="monotone" dataKey="Irradiância" stroke={COR_IRRADIANCIA} strokeWidth={2} dot={{ r: 3, fill: COR_IRRADIANCIA }} connectNulls />
+                )}
+              </ComposedChart>
             )}
           </ResponsiveContainer>
 
@@ -438,7 +505,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
               if (['Energia Injetada', 'Energia Importada'].includes(s.key)) {
                 return data.some((d: any) => d['Energia Injetada'] != null || d['Energia Importada'] != null);
               }
-              return ['Geração', 'Consumo'].includes(s.key);
+              return ['Geração', 'Consumo', 'Irradiância'].includes(s.key);
             }).map(s => (
               <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: visiveis[s.key] ? cores.text : cores.text3, cursor: 'pointer', userSelect: 'none' }}>
                 <input
@@ -452,7 +519,7 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                   background: s.key === 'Balanço' ? `linear-gradient(90deg, ${cores.amarelo} 50%, ${cores.laranja} 50%)` : s.cor,
                   opacity: visiveis[s.key] ? 1 : 0.35, display: 'inline-block',
                 }} />
-                {s.key}
+                {s.key === 'Irradiância' ? (period === 'dia' ? 'Irradiância (W/m²)' : 'Irradiação (kWh/m²)') : s.key}
               </label>
             ))}
           </div>

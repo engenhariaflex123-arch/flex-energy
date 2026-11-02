@@ -9,6 +9,7 @@ export const api = axios.create({
 
 // Adiciona o token em toda requisição, se existir
 api.interceptors.request.use((config) => {
+  if (config.method && config.method.toLowerCase() !== 'get') limparCacheApi();
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -16,11 +17,55 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// ---------------------------------------------------------------------------
+// Cache curto + deduplicação de GETs.
+//
+// O Dashboard monta ~8 componentes que buscam dados sozinhos, e vários pedem
+// EXATAMENTE a mesma URL ao mesmo tempo (ex: StatusCards e OperacaoCards
+// pedem /dados?horas=1 e /irradiancia?horas=1; BalanceCard e PieChart
+// pedem /balanco-hoje). Além disso, trocar de aba desmonta e remonta tudo,
+// refazendo todas as chamadas do zero.
+//
+// Aqui: (1) chamadas idênticas em andamento viram UMA requisição só, e
+// (2) a resposta fica guardada por alguns segundos — voltar pro Dashboard
+// logo depois de ver a Análise abre na hora, sem esperar o backend.
+// O TTL é menor que o intervalo de atualização automática (30s), então os
+// cards continuam se atualizando normalmente.
+// Qualquer POST/PATCH/DELETE limpa o cache (dado pode ter mudado).
+// ---------------------------------------------------------------------------
+const CACHE_TTL_MS = 15000;
+const cacheGet = new Map<string, { em: number; data: any }>();
+const emAndamento = new Map<string, Promise<any>>();
+
+const chaveCache = (url: string) => `${localStorage.getItem('access_token') || ''}|${url}`;
+
+export const limparCacheApi = () => { cacheGet.clear(); emAndamento.clear(); };
+
+// GET com cache. ttlMs = 0 desliga o cache (mas mantém a deduplicação de
+// chamadas simultâneas), usado em dados que atualizam mais rápido que o TTL.
+const getCache = async (url: string, ttlMs = CACHE_TTL_MS): Promise<any> => {
+  const chave = chaveCache(url);
+  const agora = Date.now();
+  const salvo = cacheGet.get(chave);
+  if (ttlMs > 0 && salvo && agora - salvo.em < ttlMs) return salvo.data;
+  const pendente = emAndamento.get(chave);
+  if (pendente) return pendente;
+  const req = api.get(url)
+    .then((res) => {
+      cacheGet.set(chave, { em: Date.now(), data: res.data });
+      return res.data;
+    })
+    .finally(() => emAndamento.delete(chave));
+  emAndamento.set(chave, req);
+  return req;
+};
+
 // Se o token for inválido/expirado, desloga automaticamente
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+  limparCacheApi();
   localStorage.removeItem('access_token');
   window.location.hash = '/login';
 }
@@ -28,18 +73,19 @@ api.interceptors.response.use(
   }
 );
 
-export const getDadosCliente = async (clienteId: string, horas = 24, hoje = false, data?: string) => {
+// janela (ex: '1m'): pede ao backend 1 ponto por janela (média) em vez do
+// dado bruto — usado no gráfico do dia, que não precisa de milhares de pontos.
+export const getDadosCliente = async (clienteId: string, horas = 24, hoje = false, data?: string, janela?: string) => {
   const params = new URLSearchParams();
   params.append('horas', String(horas));
   params.append('hoje', String(hoje));
   if (data) params.append('data', data);
-  const res = await api.get(`/dados/${clienteId}?${params.toString()}`);
-  return res.data;
+  if (janela) params.append('janela', janela);
+  return getCache(`/dados/${clienteId}?${params.toString()}`);
 };
 
 export const getBalanco = async (clienteId: string, horas = 24) => {
-  const res = await api.get(`/balanco/${clienteId}?horas=${horas}`);
-  return res.data;
+  return getCache(`/balanco/${clienteId}?horas=${horas}`);
 };
 
 export interface BalancoHoje {
@@ -67,8 +113,7 @@ export const getBalancoHoje = async (clienteId: string, data?: string): Promise<
   const params = new URLSearchParams();
   if (data) params.append('data', data);
   const query = params.toString() ? `?${params.toString()}` : '';
-  const res = await api.get(`/balanco-hoje/${clienteId}${query}`);
-  return res.data;
+  return getCache(`/balanco-hoje/${clienteId}${query}`);
 };
 
 // Histórico agregado de energia (kWh) por dia/mês/ano - base para os
@@ -108,8 +153,7 @@ export const getHistorico = async (clienteId: string, periodo: PeriodoHistorico,
   params.append('hoje', String(hoje));
   if (mes) params.append('mes', String(mes));
   if (ano) params.append('ano', String(ano));
-  const res = await api.get(`/historico/${clienteId}?${params.toString()}`);
-  return res.data;
+  return getCache(`/historico/${clienteId}?${params.toString()}`);
 };
 
 // Irradiação acumulada (kWh/m²) - área sob a curva de irradiância.
@@ -120,9 +164,15 @@ export interface IrradiacaoResponse {
   total_kwh_m2: number;
 }
 
-export const getIrradiacao = async (clienteId: string, periodo: PeriodoHistorico, hoje = false): Promise<IrradiacaoResponse> => {
-  const res = await api.get(`/irradiacao/${clienteId}?periodo=${periodo}&hoje=${hoje}`);
-  return res.data;
+// mes/ano opcionais: mês/ano específico (mesmo padrão do getHistorico) —
+// usado no gráfico principal do Dashboard em Mês/Ano.
+export const getIrradiacao = async (clienteId: string, periodo: PeriodoHistorico, hoje = false, mes?: number, ano?: number): Promise<IrradiacaoResponse> => {
+  const params = new URLSearchParams();
+  params.append('periodo', periodo);
+  params.append('hoje', String(hoje));
+  if (mes) params.append('mes', String(mes));
+  if (ano) params.append('ano', String(ano));
+  return getCache(`/irradiacao/${clienteId}?${params.toString()}`);
 };
 
 // Leitura mais recente por fase (A/B/C), já decomposta em autoconsumo/rede/
@@ -143,8 +193,8 @@ export interface FluxoFasesResponse {
 }
 
 export const getFluxoFases = async (clienteId: string): Promise<FluxoFasesResponse> => {
-  const res = await api.get(`/fluxo-fases/${clienteId}`);
-  return res.data;
+  // Atualiza a cada 10s (mais rápido que o TTL do cache) — só deduplica.
+  return getCache(`/fluxo-fases/${clienteId}`, 0);
 };
 
 // Dados de cadastro da usina (potência instalada, contagem de inversores)
@@ -160,8 +210,7 @@ export interface ClienteInfo {
 }
 
 export const getClienteInfo = async (clienteId: string): Promise<ClienteInfo> => {
-  const res = await api.get(`/cliente/${clienteId}/info`);
-  return res.data;
+  return getCache(`/cliente/${clienteId}/info`);
 };
 
 export const enviarDados = async (dados: {
@@ -176,13 +225,20 @@ export const enviarDados = async (dados: {
 };
 
 export const getDadosInversor = async (clienteId: string, horas = 24) => {
-  const res = await api.get(`/inversor/${clienteId}?horas=${horas}`);
-  return res.data;
+  return getCache(`/inversor/${clienteId}?horas=${horas}`);
 };
 
-export const getDadosIrradiancia = async (clienteId: string, horas = 24, hoje = false) => {
-  const res = await api.get(`/irradiancia/${clienteId}?horas=${horas}&hoje=${hoje}`);
-  return res.data;
+// data (YYYY-MM-DD) e janela (ex: '1m') opcionais — usados pela curva de
+// irradiância do gráfico principal do Dashboard. Com janela, o backend usa
+// o MÁXIMO de cada janela (descarta os zeros gravados por dispositivos sem
+// sensor de irradiância).
+export const getDadosIrradiancia = async (clienteId: string, horas = 24, hoje = false, data?: string, janela?: string) => {
+  const params = new URLSearchParams();
+  params.append('horas', String(horas));
+  params.append('hoje', String(hoje));
+  if (data) params.append('data', data);
+  if (janela) params.append('janela', janela);
+  return getCache(`/irradiancia/${clienteId}?${params.toString()}`);
 };
 export type PeriodoResumoGrupo = 'hoje' | 'mes' | 'ano';
 
@@ -191,8 +247,7 @@ export const getResumoGrupo = async (grupoId: number, periodo: PeriodoResumoGrup
   params.append('periodo', periodo);
   if (mes) params.append('mes', String(mes));
   if (ano) params.append('ano', String(ano));
-  const res = await api.get(`/grupos/${grupoId}/resumo?${params.toString()}`);
-  return res.data;
+  return getCache(`/grupos/${grupoId}/resumo?${params.toString()}`);
 };
 export const getClienteAtivo = (): string => {
   return localStorage.getItem('cliente_ativo') || localStorage.getItem('cliente_id') || 'cliente_001';
@@ -252,9 +307,10 @@ export const excluirMinhaUsina = async (clienteId: string) => {
   return res.data;
 };
 
+// Lista de usinas muda raramente — cache mais longo (a Sidebar busca isso
+// toda vez que se troca de aba).
 export const getMinhasUsinas = async () => {
-  const res = await api.get('/minhas-usinas');
-  return res.data;
+  return getCache('/minhas-usinas', 5 * 60 * 1000);
 };
 
 // Baixa o relatório diário em PDF (blob) — usado pelo botão "Exportar PDF"
@@ -289,8 +345,8 @@ export const getRelatorioMensalCompletoPDF = async (
 export type TipoAnalise = 'inversor' | 'medidor';
 
 export const getDispositivosAnalise = async (clienteId: string, tipo: TipoAnalise): Promise<string[]> => {
-  const res = await api.get(`/analise/${clienteId}/dispositivos?tipo=${tipo}`);
-  return res.data.dispositivos;
+  const data = await getCache(`/analise/${clienteId}/dispositivos?tipo=${tipo}`, 5 * 60 * 1000);
+  return data.dispositivos;
 };
 
 export interface PontoSerieAnalise {
@@ -320,6 +376,5 @@ export const getSerieAnalise = async (
   params.append('campos', campos.join(','));
   if (dispositivoId) params.append('dispositivo_id', dispositivoId);
   if (data) params.append('data', data);
-  const res = await api.get(`/analise/${clienteId}/serie?${params.toString()}`);
-  return res.data;
+  return getCache(`/analise/${clienteId}/serie?${params.toString()}`);
 };
