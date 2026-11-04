@@ -53,6 +53,44 @@ const COR_IRRADIANCIA = '#06B6D4'; // ciano: não confunde com o amarelo/laranja
 // ponto de energia com a leitura de irradiância do mesmo minuto.
 const chaveMinuto = (iso: string) => Math.floor(new Date(iso).getTime() / 60000);
 
+// Arredonda pra cima até um passo "redondo" (1, 2, 2,5, 5 ou 10 × 10^n).
+const passoRedondo = (v: number) => {
+  if (!(v > 0)) return 1;
+  const pot = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / pot;
+  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+  return m * pot;
+};
+
+// Escalas dos dois eixos Y com o ZERO na mesma altura. Sem isso, quando o
+// eixo da esquerda tem parte negativa (Consumo é desenhado abaixo do zero),
+// o zero da irradiância (eixo da direita) ficava lá embaixo, alinhado com o
+// valor mais negativo da esquerda — e 38 W/m² aparecia "abaixo de zero".
+// Os dois eixos passam a ter o mesmo número de divisões, com o 0 na mesma
+// linha; o da direita só mostra rótulos de 0 pra cima.
+const eixosAlinhados = (dados: any[], chavesEsq: string[], chaveDir: string) => {
+  let minE = 0, maxE = 0, maxD = 0;
+  for (const d of dados) {
+    for (const k of chavesEsq) {
+      const v = d[k];
+      if (typeof v === 'number' && Number.isFinite(v)) { if (v < minE) minE = v; if (v > maxE) maxE = v; }
+    }
+    const r = d[chaveDir];
+    if (typeof r === 'number' && Number.isFinite(r) && r > maxD) maxD = r;
+  }
+  if (maxE === 0 && minE === 0) maxE = 1;
+  const passoE = passoRedondo((maxE - minE) / 4);
+  const divPos = Math.max(1, Math.ceil(maxE / passoE));
+  const divNeg = Math.ceil(-minE / passoE);
+  const passoD = passoRedondo((maxD || 1) / divPos);
+  const ticksE = Array.from({ length: divPos + divNeg + 1 }, (_, i) => +((i - divNeg) * passoE).toFixed(6));
+  const ticksD = Array.from({ length: divPos + 1 }, (_, i) => +(i * passoD).toFixed(6));
+  return {
+    esq: { domain: [-divNeg * passoE, divPos * passoE] as [number, number], ticks: ticksE },
+    dir: { domain: [-divNeg * passoD, divPos * passoD] as [number, number], ticks: ticksD },
+  };
+};
+
 // Minutos desde meia-noite -> "HH:MM", pra rotular o eixo X (que usa
 // minutos como valor numérico, não mais a hora como texto — ver
 // comentário em "horaMin" abaixo).
@@ -278,6 +316,21 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
 
   const toggle = (key: string) => setVisiveis(v => ({ ...v, [key]: !v[key] }));
 
+  // Séries do eixo da esquerda que estão visíveis agora (as escondidas não
+  // entram no cálculo da escala) — ver eixosAlinhados.
+  const chavesEsquerda = period === 'dia'
+    ? [
+        ...(visiveis['Geração'] ? ['Geração'] : []),
+        ...(visiveis['Consumo'] ? ['Consumo'] : []),
+        ...(visiveis['Injetado'] ? ['Injetado'] : []),
+        ...(visiveis['Consumo Instantâneo'] ? ['Consumo Instantâneo'] : []),
+        ...(visiveis['Balanço'] ? ['Balanço (+)', 'Balanço (-)'] : []),
+      ]
+    : ['Geração', 'Consumo', 'Energia Injetada', 'Energia Importada'].filter(k => visiveis[k]);
+  const temMedidoPeriodo = period !== 'dia' && data.some((d: any) => d['Energia Injetada'] != null || d['Energia Importada'] != null);
+  const eixos = eixosAlinhados(data, chavesEsquerda, 'Irradiância');
+  const fmtEixoDir = (v: number) => (v < 0 ? '' : period === 'dia' ? String(Math.round(v)) : String(+v.toFixed(2)).replace('.', ','));
+
   // Tooltip com a unidade certa de cada série (antes mostrava só o número).
   const formatarTooltip = (valor: any, nome: any): [string, string] => {
     let n = Number(valor);
@@ -424,9 +477,9 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                   tickLine={false}
                   allowDataOverflow
                 />
-                <YAxis yAxisId="kw" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
+                <YAxis yAxisId="kw" domain={visiveis['Irradiância'] ? eixos.esq.domain : undefined} ticks={visiveis['Irradiância'] ? eixos.esq.ticks : undefined} allowDataOverflow={false} tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + 'kW'} />
                 {visiveis['Irradiância'] && (
-                  <YAxis yAxisId="irr" orientation="right" domain={[0, 'auto']} tick={{ fill: COR_IRRADIANCIA, fontSize: 12 }} tickLine={false} axisLine={false} width={44} label={{ value: 'W/m²', angle: 90, position: 'insideRight', fill: COR_IRRADIANCIA, fontSize: 11 }} />
+                  <YAxis yAxisId="irr" orientation="right" domain={eixos.dir.domain} ticks={eixos.dir.ticks} tickFormatter={fmtEixoDir} tick={{ fill: COR_IRRADIANCIA, fontSize: 12 }} tickLine={false} axisLine={false} width={44} label={{ value: 'W/m²', angle: 90, position: 'insideRight', fill: COR_IRRADIANCIA, fontSize: 11 }} />
                 )}
                 <Tooltip {...tt} labelFormatter={(label) => formatarMinutos(Number(label))} formatter={formatarTooltip} />
                 {visiveis['Geração'] && <Area yAxisId="kw" type="monotone" dataKey="Geração" stroke={cores.verde} strokeWidth={2} fill="url(#gG)" connectNulls />}
@@ -475,18 +528,21 @@ const MainChart: React.FC<MainChartProps> = ({ clienteAtivo, period, onDataSelec
                 />
               </ComposedChart>
             ) : (
-              <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }} barCategoryGap="12%" barGap={1}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="hora" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} interval={period === 'mes' ? 2 : 0} />
-                <YAxis yAxisId="kwh" tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
+                <YAxis yAxisId="kwh" domain={visiveis['Irradiância'] ? eixos.esq.domain : undefined} ticks={visiveis['Irradiância'] ? eixos.esq.ticks : undefined} tick={{ fill: cores.text3, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={v => v + unidade} />
                 {visiveis['Irradiância'] && (
-                  <YAxis yAxisId="irr" orientation="right" domain={[0, 'auto']} tick={{ fill: COR_IRRADIANCIA, fontSize: 12 }} tickLine={false} axisLine={false} width={44} label={{ value: 'kWh/m²', angle: 90, position: 'insideRight', fill: COR_IRRADIANCIA, fontSize: 11 }} />
+                  <YAxis yAxisId="irr" orientation="right" domain={eixos.dir.domain} ticks={eixos.dir.ticks} tickFormatter={fmtEixoDir} tick={{ fill: COR_IRRADIANCIA, fontSize: 12 }} tickLine={false} axisLine={false} width={44} label={{ value: 'kWh/m²', angle: 90, position: 'insideRight', fill: COR_IRRADIANCIA, fontSize: 11 }} />
                 )}
                 <Tooltip {...tt} formatter={formatarTooltip} />
                 {visiveis['Geração'] && <Bar yAxisId="kwh" dataKey="Geração" fill={cores.verde} radius={[4, 4, 0, 0]} opacity={0.85} />}
                 {visiveis['Consumo'] && <Bar yAxisId="kwh" dataKey="Consumo" fill={cores.vermelho} radius={[4, 4, 0, 0]} opacity={0.65} />}
-                {visiveis['Energia Injetada'] && <Bar yAxisId="kwh" dataKey="Energia Injetada" fill={cores.azul} radius={[4, 4, 0, 0]} opacity={0.85} />}
-                {visiveis['Energia Importada'] && <Bar yAxisId="kwh" dataKey="Energia Importada" fill={cores.laranja} radius={[0, 0, 4, 4]} opacity={0.85} />}
+                {/* Só desenha Injetada/Importada quando o backend mandou esses
+                    valores (cliente bidirecional) — barra vazia ainda ocupa
+                    espaço e deixava as outras finas demais. */}
+                {visiveis['Energia Injetada'] && temMedidoPeriodo && <Bar yAxisId="kwh" dataKey="Energia Injetada" fill={cores.azul} radius={[4, 4, 0, 0]} opacity={0.85} />}
+                {visiveis['Energia Importada'] && temMedidoPeriodo && <Bar yAxisId="kwh" dataKey="Energia Importada" fill={cores.laranja} radius={[0, 0, 4, 4]} opacity={0.85} />}
                 {visiveis['Irradiância'] && (
                   <Line yAxisId="irr" type="monotone" dataKey="Irradiância" stroke={COR_IRRADIANCIA} strokeWidth={2} dot={{ r: 3, fill: COR_IRRADIANCIA }} connectNulls />
                 )}
